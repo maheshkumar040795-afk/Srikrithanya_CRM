@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Srikrithanya CRM</title>
+<link rel="icon" href="assets/logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="page-loader" id="pageLoader"><div class="spinner"></div></div>
+
+<div class="app-shell" id="appShell" style="display:none;">
+
+  <!-- ================= Sidebar ================= -->
+  <nav class="sidebar">
+    <div class="brand">
+      <img src="assets/logo.png" alt="Srikrithanya" />
+      <div class="name">SRIKRITHANYA<br/><small>Private Limited</small></div>
+    </div>
+
+    <button class="nav-item active" data-view="invoiceView">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3h8a2 2 0 0 1 2 2v16l-4-2-2 2-2-2-4 2V5a2 2 0 0 1 2-2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
+      Create Invoice
+    </button>
+    <button class="nav-item" data-view="historyView">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+      Invoice History
+    </button>
+    <button class="nav-item" data-view="staffView" id="staffNavItem" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Staff Access
+    </button>
+
+    <div class="nav-spacer"></div>
+
+    <div class="user-box">
+      <div class="who" id="sidebarUserName">—</div>
+      <span class="role-badge" id="sidebarUserRole">staff</span>
+      <button class="btn btn-ghost btn-sm btn-block" id="logoutBtn" style="color:#e8dede;border-color:rgba(255,255,255,0.25);">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- ================= Main area ================= -->
+  <div class="main-area">
+    <div class="topbar">
+      <div>
+        <h1 id="topbarTitle">Create Invoice</h1>
+        <div class="sub-label" id="topbarSub">GST tax invoice for a client</div>
+      </div>
+      <button class="btn btn-primary" id="newInvoiceBtn" style="width:auto;">+ New Invoice</button>
+    </div>
+
+    <div class="content">
+
+      <!-- ============ CREATE / EDIT INVOICE ============ -->
+      <section id="invoiceView">
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Invoice details</h3>
+              <div class="desc">Invoice No. and order references</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Invoice No. (Ref. IRN)</label>
+              <input type="text" id="f_invoiceNo" readonly />
+            </div>
+            <div class="field">
+              <label>Invoice Date</label>
+              <input type="date" id="f_invoiceDate" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Order No.</label>
+              <input type="text" id="f_orderNo" placeholder="e.g. 17" />
+            </div>
+            <div class="field">
+              <label>Order Date</label>
+              <input type="date" id="f_orderDate" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Client P.O. No.</label>
+              <input type="text" id="f_clientPoNo" placeholder="Optional" />
+            </div>
+            <div class="field">
+              <label>Client P.O. Date</label>
+              <input type="date" id="f_clientPoDate" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>L.R. No.</label>
+              <input type="text" id="f_lrNo" placeholder="Optional" />
+            </div>
+            <div class="field">
+              <label>Transport</label>
+              <input type="text" id="f_transport" placeholder="Optional" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Sales Order No.</label>
+              <input type="text" id="f_salesOrderNo" placeholder="e.g. 17" />
+            </div>
+            <div class="field">
+              <label>Sales Order Date</label>
+              <input type="date" id="f_salesOrderDate" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Buyer (Bill to)</h3>
+              <div class="desc">Client the invoice is being raised for</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Buyer Name</label>
+            <input type="text" id="f_buyerName" placeholder="M/s. Client Company Pvt Ltd" />
+          </div>
+          <div class="field">
+            <label>Buyer Address</label>
+            <textarea id="f_buyerAddress" rows="2" placeholder="Street, Area, City – PIN"></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Buyer GSTIN/UIN</label>
+              <input type="text" id="f_buyerGstin" placeholder="33XXXXXXXXXXXZX" />
+            </div>
+            <div class="field">
+              <label>Buyer Email <span style="font-weight:400;color:#8a7d7c;">(for sending invoice)</span></label>
+              <input type="email" id="f_buyerEmail" placeholder="client@company.com" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Buyer Phone <span style="font-weight:400;color:#8a7d7c;">(for WhatsApp)</span></label>
+            <input type="tel" id="f_buyerPhone" placeholder="91XXXXXXXXXX" />
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Items / services</h3>
+              <div class="desc">Amount = Qty × Rate. Totals and 18% GST (9% CGST + 9% SGST) are calculated automatically.</div>
+            </div>
+          </div>
+
+          <div class="items-table-wrap">
+            <table class="items-table" id="itemsTable">
+              <thead>
+                <tr>
+                  <th class="col-sl">#</th>
+                  <th>Description of Goods / Services</th>
+                  <th class="col-hsn">HSN / SAC</th>
+                  <th class="col-qty">Qty</th>
+                  <th class="col-rate">Rate (₹)</th>
+                  <th class="col-amt">Amount (₹)</th>
+                  <th style="width:34px;"></th>
+                </tr>
+              </thead>
+              <tbody id="itemsBody"></tbody>
+            </table>
+          </div>
+          <button class="add-row-btn" id="addRowBtn" type="button">+ Add item</button>
+
+          <div class="totals-box">
+            <table>
+              <tr><td>Taxable Value</td><td id="t_taxable">₹0.00</td></tr>
+              <tr><td>CGST @ 9%</td><td id="t_cgst">₹0.00</td></tr>
+              <tr><td>SGST @ 9%</td><td id="t_sgst">₹0.00</td></tr>
+              <tr class="grand-total"><td>Total (Net Amount)</td><td id="t_total">₹0.00</td></tr>
+            </table>
+          </div>
+          <div class="words-line" id="t_words">Amount in words: —</div>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn btn-primary" id="saveInvoiceBtn" style="width:auto;">Save Invoice</button>
+          <button class="btn btn-ghost" id="previewBtn">Preview</button>
+          <button class="btn btn-ghost" id="printBtn">🖶 Print</button>
+          <button class="btn btn-ghost" id="emailBtn">✉ Email</button>
+          <button class="btn btn-ghost" id="whatsappBtn">🟢 WhatsApp</button>
+        </div>
+      </section>
+
+      <!-- ============ INVOICE HISTORY ============ -->
+      <section id="historyView" style="display:none;">
+        <div class="panel">
+          <div class="search-bar">
+            <input type="text" id="historySearch" placeholder="Search by invoice no. or buyer name…" />
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="history-table" id="historyTable">
+              <thead>
+                <tr>
+                  <th>Invoice No.</th>
+                  <th>Buyer</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Created by</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="historyEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3h8a2 2 0 0 1 2 2v16l-4-2-2 2-2-2-4 2V5a2 2 0 0 1 2-2z"/></svg>
+            <div>No invoices yet. Create your first invoice to see it here.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ STAFF ACCESS (admin only) ============ -->
+      <section id="staffView" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Add staff account</h3>
+              <div class="desc">Creates a new login for a team member. They can sign in immediately with the password you set.</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Full name</label>
+              <input type="text" id="s_name" placeholder="Staff member's name" />
+            </div>
+            <div class="field">
+              <label>Role</label>
+              <select id="s_role">
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Email</label>
+              <input type="email" id="s_email" placeholder="name@srikrithanya.com" />
+            </div>
+            <div class="field">
+              <label>Temporary password</label>
+              <input type="text" id="s_password" placeholder="At least 6 characters" />
+            </div>
+          </div>
+          <button class="btn btn-primary" id="addStaffBtn" style="width:auto;">Create account</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>All staff</h3></div>
+          <table class="history-table" id="staffTable">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+            <tbody id="staffBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= Preview Modal ================= -->
+<div class="modal-overlay" id="previewModal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3>Invoice preview</h3>
+      <button class="modal-close" data-close="previewModal">×</button>
+    </div>
+    <div class="modal-body" style="background:#eee;">
+      <div class="invoice-sheet" id="invoiceSheetPreview"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="downloadPdfBtn">Download PDF</button>
+      <button class="btn btn-primary" id="printFromPreviewBtn" style="width:auto;">Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Email Modal ================= -->
+<div class="modal-overlay" id="emailModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Email this invoice</h3>
+      <button class="modal-close" data-close="emailModal">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="field-hint" style="font-size:0.82rem;color:#6f6362;margin-bottom:16px;" id="emailHint">
+        "Attach &amp; send" opens your phone/PC's share sheet with the invoice PDF already attached — pick your email app and just fill in the address. If your browser doesn't support that, we'll download the PDF and open a draft instead, for you to attach manually.
+      </p>
+      <div class="field">
+        <label>To</label>
+        <input type="email" id="e_to" placeholder="client@company.com" />
+      </div>
+      <div class="field">
+        <label>CC <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+        <input type="text" id="e_cc" placeholder="cc1@company.com, cc2@company.com" />
+      </div>
+      <div class="field">
+        <label>Subject</label>
+        <input type="text" id="e_subject" />
+      </div>
+      <div class="field">
+        <label>Message</label>
+        <textarea id="e_body" rows="6"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="downloadPdfFromEmailBtn">Download PDF</button>
+      <button class="btn btn-primary" id="openEmailDraftBtn" style="width:auto;">Attach &amp; send</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= WhatsApp Modal ================= -->
+<div class="modal-overlay" id="waModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Send via WhatsApp</h3>
+      <button class="modal-close" data-close="waModal">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.82rem;color:#6f6362;margin-bottom:16px;" id="waHint">
+        "Attach &amp; send" opens your phone/PC's share sheet with the invoice PDF already attached — pick WhatsApp and the message below comes along as the caption. If your browser doesn't support that, we'll download the PDF and open WhatsApp Web/App instead, for you to attach manually.
+      </p>
+      <div class="field">
+        <label>WhatsApp number <span style="font-weight:400;color:#8a7d7c;">(leave blank to choose a contact in WhatsApp)</span></label>
+        <input type="tel" id="w_phone" placeholder="91XXXXXXXXXX" />
+      </div>
+      <div class="field">
+        <label>Message</label>
+        <textarea id="w_body" rows="6"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="downloadPdfFromWaBtn">Download PDF</button>
+      <button class="btn btn-primary" id="openWaBtn" style="width:auto;">Attach &amp; send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Off-screen sheet used only for print/PDF (kept out of view, not display:none,
+     so the @media print rule can reveal it — display:none elements never print). -->
+<div id="printArea">
+  <div class="invoice-sheet" id="invoiceSheetPrint"></div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/vendor/html2pdf.bundle.min.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/invoice.js"></script>
+<script src="js/history.js"></script>
+<script src="js/staff.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign in · Srikrithanya CRM</title>
+<link rel="icon" href="assets/logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="auth-page">
+  <div class="auth-visual">
+    <div class="brand-mark">
+      <img src="assets/logo.png" alt="Srikrithanya logo" />
+      <span>SRIKRITHANYA<br/>PRIVATE LIMITED</span>
+    </div>
+    <div class="visual-copy">
+      <span class="eyebrow">Internal CRM</span>
+      <h1>Fire Protection, Electrical MEP &amp; Industrial Solutions.</h1>
+      <p>Sign in to create GST invoices, track your billing history and share them with clients — right from one place.</p>
+    </div>
+    <div class="visual-foot">ISO 9001:2015 Certified · GSTIN 33ABNCS1923P1ZV</div>
+  </div>
+
+  <div class="auth-form-side">
+    <div class="auth-card">
+
+      <!-- ===== Sign in form ===== -->
+      <div id="loginView">
+        <h2>Welcome back</h2>
+        <span class="sub">Sign in with your staff email &amp; password.</span>
+
+        <div class="auth-error" id="loginError"></div>
+
+        <form id="loginForm" autocomplete="on">
+          <div class="field">
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" placeholder="you@srikrithanya.com" required autocomplete="username" />
+          </div>
+          <div class="field">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
+          </div>
+          <button type="submit" class="btn btn-primary" id="loginBtn">
+            <span id="loginBtnText">Sign in</span>
+          </button>
+        </form>
+
+        <div class="auth-foot-link">
+          <button class="btn-link" id="showForgot" type="button">Forgot your password?</button>
+        </div>
+      </div>
+
+      <!-- ===== Forgot password form ===== -->
+      <div id="forgotView" style="display:none;">
+        <h2>Reset password</h2>
+        <span class="sub">We'll email you a secure link to set a new password.</span>
+
+        <div class="auth-error" id="forgotError"></div>
+        <div class="auth-success" id="forgotSuccess"></div>
+
+        <form id="forgotForm">
+          <div class="field">
+            <label for="forgotEmail">Email</label>
+            <input type="email" id="forgotEmail" placeholder="you@srikrithanya.com" required autocomplete="username" />
+          </div>
+          <button type="submit" class="btn btn-primary" id="forgotBtn">
+            <span id="forgotBtnText">Send reset link</span>
+          </button>
+        </form>
+
+        <div class="auth-foot-link">
+          <button class="btn-link" id="showLogin" type="button">← Back to sign in</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>
