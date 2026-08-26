@@ -473,7 +473,7 @@ async function shareInvoicePdf(kind, data) {
   const shareText = kind === "whatsapp" ? document.getElementById("w_body").value : document.getElementById("e_body").value;
   const shareTitle = `Invoice ${invData.invoiceNo}`;
 
-  const canWebShareFiles = !!(navigator.canShare && navigator.share && navigator.canShare({ files: [file] }));
+  const canWebShareFiles = isMobileDevice() && !!(navigator.canShare && navigator.share && navigator.canShare({ files: [file] }));
 
   if (canWebShareFiles) {
     try {
