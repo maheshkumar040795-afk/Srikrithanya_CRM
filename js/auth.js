@@ -45,6 +45,10 @@ function friendlyAuthError(err) {
     if (user) window.location.href = "dashboard.html";
   });
 
+  if (location.protocol === "file:") {
+    document.getElementById("fileProtocolWarning").style.display = "block";
+  }
+
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     loginError.style.display = "none";

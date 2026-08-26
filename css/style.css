@@ -295,6 +295,13 @@ select:focus-visible, textarea:focus-visible {
 .invoice-sheet .bank-table .sig-cell img { max-width: 190px; margin-bottom: 4px; }
 .invoice-sheet .small-muted { color: #555; font-size: 10.5px; }
 
+/* ---------------- Alerts ---------------- */
+.file-warning {
+  background: #fdecea; color: var(--danger); border-bottom: 1px solid #f3c2be;
+  padding: 10px 20px; font-size: 0.85rem; text-align: center;
+}
+.file-warning code { background: rgba(179,38,30,0.1); padding: 1px 5px; border-radius: 4px; }
+
 /* ---------------- Toasts ---------------- */
 .toast-stack { position: fixed; bottom: 22px; right: 22px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
 .toast {

@@ -423,21 +423,49 @@ function triggerBlobDownload(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
+/** Navigates via a real <a> click rather than window.open()/location.href — far less likely
+ *  to be blocked as a popup when called from inside an async chain (e.g. after PDF generation
+ *  has consumed the click's "user activation" window). This is the same technique the working
+ *  download button already uses. */
+function openUrlViaAnchor(url, newTab) {
+  const a = document.createElement("a");
+  a.href = url;
+  if (newTab) { a.target = "_blank"; a.rel = "noopener"; }
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 // ---------------- Share (attaches the PDF via the OS share sheet when supported) ----------------
+
+// Kicked off the moment the Email/WhatsApp modal opens, so the PDF is usually already built
+// (or nearly done) by the time the user clicks "Attach & send" — keeping that click as close
+// to a real user gesture as possible, since navigator.share() requires one.
+let cachedPdfPromise = null;
+function prefetchPdfForShare() {
+  cachedPdfPromise = buildInvoicePdfFile().catch(err => { console.error(err); return null; });
+}
+
 async function shareInvoicePdf(kind, data) {
   // kind: "email" | "whatsapp" — only affects the fallback behaviour & share text.
   const btn = document.getElementById(kind === "email" ? "openEmailDraftBtn" : "openWaBtn");
   if (btn) { btn.disabled = true; }
-  showToast("Preparing PDF…");
 
-  let built;
-  try {
-    built = await buildInvoicePdfFile(data);
-  } catch (err) {
-    console.error(err);
-    showToast(err.message || "Couldn't generate the PDF.", "error");
-    if (btn) btn.disabled = false;
-    return;
+  let built = null;
+  if (cachedPdfPromise) {
+    built = await cachedPdfPromise;
+    cachedPdfPromise = null;
+  }
+  if (!built) {
+    showToast("Preparing PDF…");
+    try {
+      built = await buildInvoicePdfFile(data);
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Couldn't generate the PDF.", "error");
+      if (btn) btn.disabled = false;
+      return;
+    }
   }
 
   const { blob, filename, data: invData } = built;
@@ -460,15 +488,15 @@ async function shareInvoicePdf(kind, data) {
     }
   }
 
-  // Fallback for browsers that can't attach files to a share/mailto/wa.me action:
-  // download the PDF, then open the best manual draft we can.
+  // Fallback for browsers/devices that can't attach files directly:
+  // download the PDF, then open Gmail compose (or WhatsApp) with everything else pre-filled.
   triggerBlobDownload(blob, filename);
   if (kind === "email") {
     openEmailDraftRaw();
-    showToast("PDF downloaded — attach it to the email draft that just opened.", "error");
+    showToast("PDF downloaded — attach it in the Gmail tab that just opened.", "error");
   } else {
     openWhatsAppRaw();
-    showToast("PDF downloaded — attach it in WhatsApp once it opens.", "error");
+    showToast("PDF downloaded — attach it in the WhatsApp tab that just opened.", "error");
   }
   if (btn) btn.disabled = false;
 }
@@ -491,17 +519,21 @@ Regards,
 ${SELLER.name}
 ${SELLER.phone} | ${SELLER.email}`;
   document.getElementById("emailModal").classList.add("open");
+  prefetchPdfForShare();
 }
 
-/** Opens a plain mailto: draft — used as the fallback when the device can't attach files directly. */
+/** Opens a Gmail compose window with To/CC/Subject/Body pre-filled — used as the fallback
+ *  when the device can't attach files directly via the share sheet. Gmail's web compose URL
+ *  works in any browser with no OS-level "default mail app" setup required, which mailto:
+ *  links depend on (and most machines don't have one configured). */
 function openEmailDraftRaw() {
   const to = document.getElementById("e_to").value.trim();
   const cc = document.getElementById("e_cc").value.trim();
   const subject = document.getElementById("e_subject").value;
   const body = document.getElementById("e_body").value;
-  let url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  if (cc) url += `&cc=${encodeURIComponent(cc)}`;
-  window.location.href = url;
+  const params = new URLSearchParams({ view: "cm", fs: "1", to: to, su: subject, body: body });
+  if (cc) params.set("cc", cc);
+  openUrlViaAnchor("https://mail.google.com/mail/?" + params.toString(), true);
 }
 
 // ---------------- WhatsApp ----------------
@@ -511,6 +543,7 @@ function openWaModal() {
   document.getElementById("w_body").value =
 `Dear ${data.buyerName || "Sir/Madam"}, please find Tax Invoice ${data.invoiceNo} dated ${fmtDate(data.invoiceDate)} for ${fmtMoney(data.netTotal)} from ${SELLER.name}.`;
   document.getElementById("waModal").classList.add("open");
+  prefetchPdfForShare();
 }
 
 /** Opens wa.me with just the text — used as the fallback when the device can't attach files directly. */
@@ -520,5 +553,5 @@ function openWhatsAppRaw() {
   const url = phone
     ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
     : `https://wa.me/?text=${encodeURIComponent(text)}`;
-  window.open(url, "_blank");
+  openUrlViaAnchor(url, true);
 }

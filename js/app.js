@@ -27,6 +27,10 @@ function closeModal(id) {
 }
 
 (async function boot() {
+  if (location.protocol === "file:") {
+    document.getElementById("fileProtocolWarning").style.display = "block";
+  }
+
   const { user, profile } = await requireAuth();
 
   document.getElementById("pageLoader").style.display = "none";

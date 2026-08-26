@@ -11,6 +11,10 @@
 </head>
 <body>
 
+<div class="file-warning" id="fileProtocolWarning" style="display:none;">
+  ⚠️ This page is open directly from a file (<code>file://…</code>), so PDF download, print, and Attach &amp; Send won't work — browsers block that for security. Serve it through a local web server instead (see README.md → "Try it locally"), or deploy it to GitHub Pages.
+</div>
+
 <div class="page-loader" id="pageLoader"><div class="spinner"></div></div>
 
 <div class="app-shell" id="appShell" style="display:none;">
@@ -297,7 +301,7 @@
     </div>
     <div class="modal-body">
       <p class="field-hint" style="font-size:0.82rem;color:#6f6362;margin-bottom:16px;" id="emailHint">
-        "Attach &amp; send" opens your phone/PC's share sheet with the invoice PDF already attached — pick your email app and just fill in the address. If your browser doesn't support that, we'll download the PDF and open a draft instead, for you to attach manually.
+        "Attach &amp; send" tries your device's share sheet first (PDF attached automatically). If that's not available, it downloads the PDF and opens a Gmail compose tab with the message filled in — just attach the downloaded file there.
       </p>
       <div class="field">
         <label>To</label>
@@ -332,7 +336,7 @@
     </div>
     <div class="modal-body">
       <p style="font-size:0.82rem;color:#6f6362;margin-bottom:16px;" id="waHint">
-        "Attach &amp; send" opens your phone/PC's share sheet with the invoice PDF already attached — pick WhatsApp and the message below comes along as the caption. If your browser doesn't support that, we'll download the PDF and open WhatsApp Web/App instead, for you to attach manually.
+        "Attach &amp; send" tries your device's share sheet first (PDF attached automatically, with WhatsApp as one of the options). If that's not available, it downloads the PDF and opens WhatsApp Web/App with the message filled in — just attach the downloaded file there.
       </p>
       <div class="field">
         <label>WhatsApp number <span style="font-weight:400;color:#8a7d7c;">(leave blank to choose a contact in WhatsApp)</span></label>
