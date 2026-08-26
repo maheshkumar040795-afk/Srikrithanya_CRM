@@ -78,16 +78,3 @@ function escapeHtml(str) {
 function uid(prefix) {
   return (prefix || "id") + "_" + Math.random().toString(36).slice(2, 9);
 }
-
-/** True on phones/tablets, where the native share sheet reliably lists real apps
- *  (Gmail, WhatsApp, etc.) with the file genuinely attached. On Windows/macOS desktop
- *  browsers, navigator.share() instead opens the generic OS "Share" panel (Nearby Sharing,
- *  Teams, Outlook…) — it doesn't list Gmail at all, and doesn't reliably pass the drafted
- *  text through to WhatsApp. So share-to-file is only attempted on mobile; desktop always
- *  uses the Gmail-compose / wa.me fallback, which is the more predictable experience there. */
-function isMobileDevice() {
-  if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean") {
-    return navigator.userAgentData.mobile;
-  }
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}

@@ -2,7 +2,7 @@
 
 A lightweight invoicing CRM for **Srikrithanya Private Limited** — staff login, GST tax invoice
 builder (auto CGST/SGST @ 9% each), invoice history with edit/recreate, and
-print / PDF / email-draft / WhatsApp sharing. No backend server — just static files +
+print / PDF download. No backend server — just static files +
 Firebase (Auth + Firestore), so it deploys for free on GitHub Pages.
 
 ---
@@ -104,13 +104,6 @@ python3 -m http.server 8080
   and signature block. PDF generation uses `html2pdf.js`, bundled directly in
   `js/vendor/html2pdf.bundle.min.js` (no external CDN — so it can't be broken by a
   blocked/slow CDN or an ad-blocker).
-- **Email / WhatsApp — "Attach & send"** — on a phone (and most modern desktop Chrome/Edge),
-  clicking this generates the PDF and opens your device's native **share sheet** with the
-  file already attached — pick WhatsApp, Gmail, Mail, etc. and it's genuinely attached, not
-  something you attach yourself. On a browser that doesn't support attaching files this way
-  (mainly desktop Safari/Firefox), it automatically falls back to downloading the PDF and
-  opening a pre-filled `mailto:` draft or `wa.me` chat instead, so you just attach the file
-  that already downloaded.
 - **Invoice History** — lists every saved invoice with search by invoice no. / buyer.
   **Download** gets you the PDF straight from a saved invoice without reopening it.
   **Edit** loads it back into the form for changes. **Recreate** copies all the details

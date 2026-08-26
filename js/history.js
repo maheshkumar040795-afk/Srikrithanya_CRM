@@ -44,8 +44,6 @@ function renderHistory(list) {
           <button class="icon-btn" data-action="recreate" title="Recreate as new">⎘</button>
           <button class="icon-btn" data-action="download" title="Download PDF">⬇</button>
           <button class="icon-btn" data-action="print" title="Print">🖶</button>
-          <button class="icon-btn" data-action="email" title="Email">✉</button>
-          <button class="icon-btn" data-action="wa" title="WhatsApp">🟢</button>
           <button class="icon-btn" data-action="delete" title="Delete">🗑</button>
         </div>
       </td>
@@ -85,16 +83,6 @@ function handleHistoryAction(action, inv) {
   if (action === "print") {
     document.getElementById("invoiceSheetPrint").innerHTML = renderInvoiceHTML(inv);
     window.print();
-    return;
-  }
-  if (action === "email") {
-    loadInvoiceIntoForm(inv, inv.id);
-    openEmailModal();
-    return;
-  }
-  if (action === "wa") {
-    loadInvoiceIntoForm(inv, inv.id);
-    openWaModal();
     return;
   }
   if (action === "delete") {

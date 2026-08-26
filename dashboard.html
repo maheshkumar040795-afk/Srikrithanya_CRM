@@ -143,12 +143,12 @@
               <input type="text" id="f_buyerGstin" placeholder="33XXXXXXXXXXXZX" />
             </div>
             <div class="field">
-              <label>Buyer Email <span style="font-weight:400;color:#8a7d7c;">(for sending invoice)</span></label>
+              <label>Buyer Email</label>
               <input type="email" id="f_buyerEmail" placeholder="client@company.com" />
             </div>
           </div>
           <div class="field">
-            <label>Buyer Phone <span style="font-weight:400;color:#8a7d7c;">(for WhatsApp)</span></label>
+            <label>Buyer Phone</label>
             <input type="tel" id="f_buyerPhone" placeholder="91XXXXXXXXXX" />
           </div>
         </div>
@@ -194,8 +194,6 @@
           <button class="btn btn-primary" id="saveInvoiceBtn" style="width:auto;">Save Invoice</button>
           <button class="btn btn-ghost" id="previewBtn">Preview</button>
           <button class="btn btn-ghost" id="printBtn">🖶 Print</button>
-          <button class="btn btn-ghost" id="emailBtn">✉ Email</button>
-          <button class="btn btn-ghost" id="whatsappBtn">🟢 WhatsApp</button>
         </div>
       </section>
 
@@ -288,68 +286,6 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" id="downloadPdfBtn">Download PDF</button>
       <button class="btn btn-primary" id="printFromPreviewBtn" style="width:auto;">Print</button>
-    </div>
-  </div>
-</div>
-
-<!-- ================= Email Modal ================= -->
-<div class="modal-overlay" id="emailModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3>Email this invoice</h3>
-      <button class="modal-close" data-close="emailModal">×</button>
-    </div>
-    <div class="modal-body">
-      <p class="field-hint" style="font-size:0.82rem;color:#6f6362;margin-bottom:16px;" id="emailHint">
-        On a phone, "Attach &amp; send" opens your share sheet with the PDF already attached — pick your email app and go. On a computer, it downloads the PDF and opens a Gmail compose tab with the message filled in — just attach the downloaded file there.
-      </p>
-      <div class="field">
-        <label>To</label>
-        <input type="email" id="e_to" placeholder="client@company.com" />
-      </div>
-      <div class="field">
-        <label>CC <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
-        <input type="text" id="e_cc" placeholder="cc1@company.com, cc2@company.com" />
-      </div>
-      <div class="field">
-        <label>Subject</label>
-        <input type="text" id="e_subject" />
-      </div>
-      <div class="field">
-        <label>Message</label>
-        <textarea id="e_body" rows="6"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" id="downloadPdfFromEmailBtn">Download PDF</button>
-      <button class="btn btn-primary" id="openEmailDraftBtn" style="width:auto;">Attach &amp; send</button>
-    </div>
-  </div>
-</div>
-
-<!-- ================= WhatsApp Modal ================= -->
-<div class="modal-overlay" id="waModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3>Send via WhatsApp</h3>
-      <button class="modal-close" data-close="waModal">×</button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:0.82rem;color:#6f6362;margin-bottom:16px;" id="waHint">
-        On a phone, "Attach &amp; send" opens your share sheet with the PDF already attached — pick WhatsApp and go. On a computer, it downloads the PDF and opens WhatsApp Web/App with the message filled in — just attach the downloaded file there.
-      </p>
-      <div class="field">
-        <label>WhatsApp number <span style="font-weight:400;color:#8a7d7c;">(leave blank to choose a contact in WhatsApp)</span></label>
-        <input type="tel" id="w_phone" placeholder="91XXXXXXXXXX" />
-      </div>
-      <div class="field">
-        <label>Message</label>
-        <textarea id="w_body" rows="6"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" id="downloadPdfFromWaBtn">Download PDF</button>
-      <button class="btn btn-primary" id="openWaBtn" style="width:auto;">Attach &amp; send</button>
     </div>
   </div>
 </div>

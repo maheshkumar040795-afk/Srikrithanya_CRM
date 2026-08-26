@@ -54,8 +54,6 @@ function closeModal(id) {
   document.getElementById("saveInvoiceBtn").addEventListener("click", saveInvoice);
   document.getElementById("previewBtn").addEventListener("click", openPreview);
   document.getElementById("printBtn").addEventListener("click", printInvoice);
-  document.getElementById("emailBtn").addEventListener("click", openEmailModal);
-  document.getElementById("whatsappBtn").addEventListener("click", openWaModal);
 
   // Preview modal
   document.getElementById("downloadPdfBtn").addEventListener("click", () => downloadInvoicePdf());
@@ -63,14 +61,6 @@ function closeModal(id) {
     closeModal("previewModal");
     printInvoice();
   });
-
-  // Email modal
-  document.getElementById("openEmailDraftBtn").addEventListener("click", () => shareInvoicePdf("email"));
-  document.getElementById("downloadPdfFromEmailBtn").addEventListener("click", () => downloadInvoicePdf());
-
-  // WhatsApp modal
-  document.getElementById("openWaBtn").addEventListener("click", () => shareInvoicePdf("whatsapp"));
-  document.getElementById("downloadPdfFromWaBtn").addEventListener("click", () => downloadInvoicePdf());
 
   // Modal close buttons + overlay click
   document.querySelectorAll("[data-close]").forEach(btn => {
