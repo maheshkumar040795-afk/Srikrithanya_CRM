@@ -48,8 +48,23 @@ service cloud.firestore {
     match /invoices/{invoiceId} {
       allow read, write: if isSignedIn();
     }
+    match /clients/{clientId} {
+      allow read, write: if isSignedIn();
+    }
+    match /employeeIdCards/{cardId} {
+      allow read, write: if isSignedIn();
+    }
     match /counters/{counterId} {
       allow read, write: if isSignedIn();
+    }
+    match /amcContracts/{contractId} {
+      allow read, write: if isSignedIn();
+    }
+    match /boqs/{boqId} {
+      allow read, write: if isSignedIn();
+    }
+    match /financeEntries/{entryId} {
+      allow read, write: if isAdmin();
     }
   }
 }
@@ -108,6 +123,43 @@ python3 -m http.server 8080
   **Download** gets you the PDF straight from a saved invoice without reopening it.
   **Edit** loads it back into the form for changes. **Recreate** copies all the details
   into a brand-new invoice with a fresh invoice number (handy for repeat orders).
+- **Clients** — onboard a client once (name, address, email, contact, bank name/account,
+  IFSC) and it's saved for reuse. In the invoice builder, typing into **Buyer Name** or
+  **Buyer Address** suggests matching onboarded clients — picking one fills in Name,
+  Address, Email and Phone automatically. If a client isn't onboarded yet, just type
+  their details in manually as before; nothing is required to be pre-saved.
+- **ID Cards** — upload an employee photo (auto-cropped/compressed to a passport-photo
+  ratio) plus Name, Contact, Employee Code, and an optional Blood Group, and it renders
+  a live preview of a print-ready badge with the company logo and the Director's
+  signature (cropped from the real signature, `assets/director-signature.png`). Cards
+  are saved to Firestore for later editing/reprinting, and can be exported as a
+  high-resolution **PNG** or a **PDF sized to the real CR80 card dimensions**
+  (54mm × 85.6mm) for professional card printing.
+- **AMC tab** — track Annual Maintenance Contracts: Client Name, Contract Start/End Date,
+  and a Cycle (3 Months / 6 Months / Annual). Each contract shows under its own cycle
+  sub-tab. Rather than only watching the final End Date, each cycle period gets its own
+  recurring due date — e.g. a 3-month cycle running Jan 1–Dec 31 is due Mar 31, Jun 30,
+  Sep 30 and Dec 31, not just once at the end. Whichever due date is next is flagged red
+  (row highlight + status badge showing the exact date) starting 10 days before it, or
+  if it's already passed. A summary banner appears automatically on login if anything
+  needs attention, with a link straight to the AMC tab, and the sidebar's AMC nav item
+  shows a small red count badge. The 10-day lead time and cycle lengths are set in
+  `AMC_ALERT_LEAD_DAYS` / `AMC_CYCLE_MONTHS` at the top of `js/amc.js`.
+- **BOQ tab** — build a Bill of Quantities / quotation: an auto-numbered BOQ (BOQ-001,
+  BOQ-002, …), project name/location, client details (autocompletes from onboarded
+  Clients), and a line-item table (Description, Unit, Qty, Rate — Amount is Qty × Rate).
+  GST % is a plain number field you set per BOQ (not fixed like the invoice's 18%) and
+  is split evenly into CGST + SGST for the totals. BOQs save to Firestore for later
+  editing, and export as a PDF styled like the company's invoices (via the same
+  `html2pdf.js`).
+- **Finance tab** (admin only) — log income and expense entries (date, category, party,
+  payment mode, notes). Includes an **Owner Drawings (Personal Use)** expense category
+  so money taken out for personal/own needs stays tracked separately from real business
+  spend, rather than being invisible or lumped in with company expenses. Summary cards
+  show Total Income, Total Expense, and Net Balance for whatever's currently filtered
+  (search, type, category, date range). Filtered results can be exported as a **PDF
+  statement** (via the same `html2pdf.js` used for invoices) or an **Excel workbook**
+  (via `SheetJS`, bundled in `js/vendor/xlsx.full.min.js`, also no external CDN).
 
 ## Editing the seller's fixed details
 

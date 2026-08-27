@@ -78,3 +78,17 @@ function escapeHtml(str) {
 function uid(prefix) {
   return (prefix || "id") + "_" + Math.random().toString(36).slice(2, 9);
 }
+
+/** Turns a raw Firestore/Firebase error into a short, specific message instead of a
+ *  generic "check your Firebase setup" — Firestore's own error code almost always
+ *  points straight at the actual fix, so surface it instead of hiding it. */
+function friendlyFirestoreError(err, action) {
+  const code = err && err.code;
+  if (code === "permission-denied") {
+    return `Couldn't ${action} — Firestore security rules are blocking this. In Firebase console → Firestore Database → Rules, make sure the rules from README.md are pasted in and published.`;
+  }
+  if (code === "unavailable") {
+    return `Couldn't ${action} — Firestore looks unreachable. Check your internet connection.`;
+  }
+  return `Couldn't ${action}${err && err.message ? ": " + err.message : " — check your Firebase setup."}`;
+}

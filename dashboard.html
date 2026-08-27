@@ -12,12 +12,22 @@
 <body>
 
 <div class="file-warning" id="fileProtocolWarning" style="display:none;">
-  ⚠️ This page is open directly from a file (<code>file://…</code>), so PDF download, print, and Attach &amp; Send won't work — browsers block that for security. Serve it through a local web server instead (see README.md → "Try it locally"), or deploy it to GitHub Pages.
+  ⚠️ This page is open directly from a file (<code>file://…</code>), so PDF download and print won't work — browsers block that for security. Serve it through a local web server instead (see README.md → "Try it locally"), or deploy it to GitHub Pages.
+</div>
+
+<div class="amc-notify-banner" id="amcNotifyBanner" style="display:none;">
+  <span id="amcNotifyText"></span>
+  <div class="amc-notify-actions">
+    <button class="btn btn-sm btn-dark" id="amcNotifyViewBtn" style="width:auto;">View AMC</button>
+    <button class="amc-notify-close" id="amcNotifyCloseBtn" title="Dismiss">×</button>
+  </div>
 </div>
 
 <div class="page-loader" id="pageLoader"><div class="spinner"></div></div>
 
 <div class="app-shell" id="appShell" style="display:none;">
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
   <!-- ================= Sidebar ================= -->
   <nav class="sidebar">
@@ -33,6 +43,27 @@
     <button class="nav-item" data-view="historyView">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
       Invoice History
+    </button>
+    <button class="nav-item" data-view="clientsView">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      Clients
+    </button>
+    <button class="nav-item" data-view="idCardsView">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h3M15 12h3M6 16h12"/></svg>
+      ID Cards
+    </button>
+    <button class="nav-item" data-view="boqView">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6l1 3h3a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3l1-3z"/><path d="M8 12h8M8 16h5"/></svg>
+      BOQ
+    </button>
+    <button class="nav-item" data-view="amcView">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg>
+      AMC
+      <span class="nav-badge" id="amcNavBadge" style="display:none;"></span>
+    </button>
+    <button class="nav-item" data-view="financeView" id="financeNavItem" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/><circle cx="17" cy="15" r="1.5"/></svg>
+      Finance
     </button>
     <button class="nav-item" data-view="staffView" id="staffNavItem" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -52,10 +83,14 @@
   <div class="main-area">
     <div class="topbar">
       <div>
-        <h1 id="topbarTitle">Create Invoice</h1>
-        <div class="sub-label" id="topbarSub">GST tax invoice for a client</div>
+        <button class="hamburger-btn" id="sidebarToggleBtn" aria-label="Open menu">☰</button>
+        <div>
+          <h1 id="topbarTitle">Create Invoice</h1>
+          <div class="sub-label" id="topbarSub">GST tax invoice for a client</div>
+        </div>
       </div>
       <button class="btn btn-primary" id="newInvoiceBtn" style="width:auto;">+ New Invoice</button>
+      <button class="btn btn-primary" id="newIdCardBtn" style="width:auto; display:none;">+ New ID Card</button>
     </div>
 
     <div class="content">
@@ -129,13 +164,16 @@
               <div class="desc">Client the invoice is being raised for</div>
             </div>
           </div>
-          <div class="field">
+          <div class="field autocomplete-field">
             <label>Buyer Name</label>
-            <input type="text" id="f_buyerName" placeholder="M/s. Client Company Pvt Ltd" />
+            <input type="text" id="f_buyerName" placeholder="M/s. Client Company Pvt Ltd" autocomplete="off" />
+            <div class="autocomplete-list" id="buyerNameSuggestions"></div>
+            <div class="hint">Start typing to pick an onboarded client, or enter new details manually.</div>
           </div>
-          <div class="field">
+          <div class="field autocomplete-field">
             <label>Buyer Address</label>
             <textarea id="f_buyerAddress" rows="2" placeholder="Street, Area, City – PIN"></textarea>
+            <div class="autocomplete-list" id="buyerAddressSuggestions"></div>
           </div>
           <div class="field-row">
             <div class="field">
@@ -225,6 +263,546 @@
         </div>
       </section>
 
+      <!-- ============ CLIENT ONBOARDING ============ -->
+      <section id="clientsView" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3 id="clientFormTitle">Onboard a client</h3>
+              <div class="desc">Save their details once — pick them by name next time you create an invoice.</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Client Name</label>
+            <input type="text" id="c_name" placeholder="M/s. Client Company Pvt Ltd" />
+          </div>
+          <div class="field">
+            <label>Client Address</label>
+            <textarea id="c_address" rows="2" placeholder="Street, Area, City – PIN"></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Email</label>
+              <input type="email" id="c_email" placeholder="client@company.com" />
+            </div>
+            <div class="field">
+              <label>Contact</label>
+              <input type="tel" id="c_contact" placeholder="91XXXXXXXXXX" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Bank Name</label>
+              <input type="text" id="c_bankName" placeholder="e.g. HDFC Bank" />
+            </div>
+            <div class="field">
+              <label>Bank Account No.</label>
+              <input type="text" id="c_bankAccount" placeholder="Account number" />
+            </div>
+          </div>
+          <div class="field" style="max-width:280px;">
+            <label>IFSC Code</label>
+            <input type="text" id="c_ifsc" placeholder="e.g. HDFC0001234" />
+          </div>
+          <div class="action-bar" style="margin-top:4px;">
+            <button class="btn btn-primary" id="saveClientBtn" style="width:auto;">Save Client</button>
+            <button class="btn btn-ghost" id="cancelClientEditBtn" style="display:none;">Cancel edit</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Onboarded clients</h3>
+              <div class="desc">Shown as suggestions when creating an invoice.</div>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="clientSearch" placeholder="Search by client name…" />
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="history-table" id="clientsTable">
+              <thead>
+                <tr>
+                  <th>Client Name</th>
+                  <th>Address</th>
+                  <th>Email</th>
+                  <th>Contact</th>
+                  <th>Bank</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="clientsBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="clientsEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+            <div>No clients onboarded yet. Add your first client above.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ID CARD GENERATION ============ -->
+      <section id="idCardsView" style="display:none;">
+        <div class="two-col">
+          <div class="panel" style="flex:1 1 360px;">
+            <div class="panel-head">
+              <div>
+                <h3 id="idCardFormTitle">Generate an ID card</h3>
+                <div class="desc">Upload a photo and fill in the employee's details.</div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Employee Photo</label>
+              <input type="file" id="i_photoInput" accept="image/*" style="display:none;" />
+              <div class="photo-upload-box" id="photoUploadBox">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span id="photoUploadLabel">Click to upload photo</span>
+              </div>
+              <div class="hint">Automatically compressed and cropped to passport size for the card.</div>
+            </div>
+
+            <div class="field">
+              <label>Employee Name</label>
+              <input type="text" id="i_name" placeholder="Full name" />
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Employee Contact</label>
+                <input type="tel" id="i_contact" placeholder="91XXXXXXXXXX" />
+              </div>
+              <div class="field">
+                <label>Employee Code</label>
+                <input type="text" id="i_code" placeholder="e.g. SRK-EMP-01" />
+              </div>
+            </div>
+            <div class="field" style="max-width:220px;">
+              <label>Blood Group <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <select id="i_blood">
+                <option value="">Not specified</option>
+                <option>A+</option><option>A-</option>
+                <option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option>
+                <option>O+</option><option>O-</option>
+              </select>
+            </div>
+
+            <div class="action-bar" style="margin-top:4px;">
+              <button class="btn btn-primary" id="saveIdCardBtn" style="width:auto;">Save & Generate</button>
+              <button class="btn btn-ghost" id="cancelIdCardEditBtn" style="display:none;">Cancel edit</button>
+            </div>
+          </div>
+
+          <div class="panel" style="flex:0 0 auto; display:flex; flex-direction:column; align-items:center;">
+            <div class="panel-head" style="align-self:stretch;">
+              <div>
+                <h3>Preview</h3>
+                <div class="desc">Exactly how the printed card will look</div>
+              </div>
+            </div>
+            <div class="id-card" id="idCardPreview">
+              <div class="id-card-header">
+                <img src="assets/logo.png" class="id-card-logo" alt="" />
+                <div class="id-card-company-name">SRIKRITHANYA</div>
+                <div class="id-card-company-sub">Private Limited</div>
+              </div>
+              <div class="id-card-photo-wrap">
+                <div class="id-card-photo-frame" id="idCardPhotoFrame">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+              </div>
+              <div class="id-card-body">
+                <div class="id-card-name" id="idc_name">Employee Name</div>
+                <div class="id-card-row"><span class="lbl">Emp. Code</span><span class="val" id="idc_code">—</span></div>
+                <div class="id-card-row"><span class="lbl">Contact</span><span class="val" id="idc_contact">—</span></div>
+                <div class="id-card-row" id="idc_bloodRow"><span class="lbl">Blood Group</span><span class="val" id="idc_blood">—</span></div>
+              </div>
+              <div class="id-card-footer">
+                <img src="assets/director-signature.png" class="id-card-sign" alt="" />
+                <div class="id-card-sign-label">Director</div>
+              </div>
+            </div>
+            <div class="action-bar" style="margin-top:16px; justify-content:center;">
+              <button class="btn btn-ghost" id="downloadIdCardPngBtn">Download PNG</button>
+              <button class="btn btn-ghost" id="downloadIdCardPdfBtn">Download PDF</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:18px;">
+          <div class="panel-head">
+            <div>
+              <h3>Issued ID cards</h3>
+              <div class="desc">Every card generated so far.</div>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="idCardSearch" placeholder="Search by name or employee code…" />
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="history-table" id="idCardsTable">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Name</th>
+                  <th>Code</th>
+                  <th>Contact</th>
+                  <th>Blood Group</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="idCardsBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="idCardsEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h3M15 12h3M6 16h12"/></svg>
+            <div>No ID cards generated yet. Create your first one above.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ BOQ (Bill of Quantities) ============ -->
+      <section id="boqView" style="display:none;">
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>BOQ details</h3>
+              <div class="desc">BOQ number is auto-generated; project details identify what this quotation covers.</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>BOQ No.</label>
+              <input type="text" id="b_boqNo" readonly />
+            </div>
+            <div class="field">
+              <label>BOQ Date</label>
+              <input type="date" id="b_boqDate" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Project Name</label>
+              <input type="text" id="b_projectName" placeholder="Enter project name" />
+            </div>
+            <div class="field">
+              <label>Project Location</label>
+              <input type="text" id="b_projectLocation" placeholder="Enter site location" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Client</h3>
+              <div class="desc">Client this BOQ / quotation is being prepared for</div>
+            </div>
+          </div>
+          <div class="field autocomplete-field">
+            <label>Client Name</label>
+            <input type="text" id="b_clientName" placeholder="M/s. Client Company Pvt Ltd" autocomplete="off" />
+            <div class="autocomplete-list" id="boqClientNameSuggestions"></div>
+            <div class="hint">Start typing to pick an onboarded client, or enter new details manually.</div>
+          </div>
+          <div class="field">
+            <label>Client Address</label>
+            <textarea id="b_clientAddress" rows="2" placeholder="Street, Area, City – PIN"></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Client Contact</label>
+              <input type="text" id="b_clientContact" placeholder="Phone / Email" />
+            </div>
+            <div class="field">
+              <label>Client GSTIN/UIN</label>
+              <input type="text" id="b_clientGstin" placeholder="Optional" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Items</h3>
+              <div class="desc">Amount = Qty × Rate. Set the GST % below — it's split evenly into CGST + SGST.</div>
+            </div>
+          </div>
+
+          <div class="items-table-wrap">
+            <table class="items-table" id="boqItemsTable">
+              <thead>
+                <tr>
+                  <th class="col-sl">#</th>
+                  <th>Description of Work / Item</th>
+                  <th class="col-unit">Unit</th>
+                  <th class="col-qty">Qty</th>
+                  <th class="col-rate">Rate (₹)</th>
+                  <th class="col-amt">Amount (₹)</th>
+                  <th style="width:34px;"></th>
+                </tr>
+              </thead>
+              <tbody id="boqItemsBody"></tbody>
+            </table>
+          </div>
+          <button class="add-row-btn" id="addBoqRowBtn" type="button">+ Add item</button>
+
+          <div class="field" style="max-width:160px; margin-top:14px;">
+            <label>GST %</label>
+            <input type="number" id="b_gstPercent" min="0" step="0.01" value="18" />
+          </div>
+
+          <div class="totals-box">
+            <table>
+              <tr><td>Taxable Value</td><td id="b_taxable">₹0.00</td></tr>
+              <tr><td id="b_cgstLabel">CGST @ 9%</td><td id="b_cgst">₹0.00</td></tr>
+              <tr><td id="b_sgstLabel">SGST @ 9%</td><td id="b_sgst">₹0.00</td></tr>
+              <tr class="grand-total"><td>Total (Net Amount)</td><td id="b_total">₹0.00</td></tr>
+            </table>
+          </div>
+          <div class="words-line" id="b_words">Amount in words: —</div>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn btn-primary" id="saveBoqBtn" style="width:auto;">Save BOQ</button>
+          <button class="btn btn-ghost" id="previewBoqBtn">Preview</button>
+          <button class="btn btn-ghost" id="newBoqBtn">New BOQ</button>
+          <button class="btn btn-ghost" id="downloadBoqPdfBtn">⬇ Download PDF</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Saved BOQs</h3>
+              <div class="desc">Previously saved quotations — edit, re-download, or delete.</div>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="boqSearch" placeholder="Search by BOQ no., project or client…" />
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="history-table" id="boqListTable">
+              <thead>
+                <tr>
+                  <th>BOQ No.</th>
+                  <th>Project</th>
+                  <th>Client</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="boqListBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="boqListEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h6l1 3h3a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3l1-3z"/></svg>
+            <div>No BOQs saved yet.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ AMC (Annual Maintenance Contracts) ============ -->
+      <section id="amcView" style="display:none;">
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3 id="amcFormTitle">Add an AMC contract</h3>
+              <div class="desc">Pick a cycle and the contract lands under that cycle's tab below. Each cycle period gets its own recurring due date (e.g. a 3-month cycle running Jan 1–Dec 31 is due Mar 31, Jun 30, Sep 30 and Dec 31) — whichever is next is flagged red starting 10 days before it.</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Client Name</label>
+              <input type="text" id="amc_clientName" list="amcClientDatalist" placeholder="M/s. Client Company Pvt Ltd" autocomplete="off" />
+              <datalist id="amcClientDatalist"></datalist>
+            </div>
+            <div class="field">
+              <label>AMC Cycle</label>
+              <select id="amc_cycle">
+                <option value="3m">3 Months</option>
+                <option value="6m">6 Months</option>
+                <option value="annual">Annual</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Contract Start Date</label>
+              <input type="date" id="amc_startDate" />
+            </div>
+            <div class="field">
+              <label>Contract End Date</label>
+              <input type="date" id="amc_endDate" />
+            </div>
+          </div>
+          <div class="action-bar" style="margin-top:4px;">
+            <button class="btn btn-primary" id="saveAmcBtn" style="width:auto;">Save Contract</button>
+            <button class="btn btn-ghost" id="cancelAmcEditBtn" style="display:none;">Cancel edit</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="amc-subtabs">
+            <button type="button" class="amc-subtab active" data-cycle="3m">3 Months <span class="badge-count" id="amcCount3m" style="display:none;"></span></button>
+            <button type="button" class="amc-subtab" data-cycle="6m">6 Months <span class="badge-count" id="amcCount6m" style="display:none;"></span></button>
+            <button type="button" class="amc-subtab" data-cycle="annual">Annual <span class="badge-count" id="amcCountAnnual" style="display:none;"></span></button>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="amcSearch" placeholder="Search by client name…" />
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="history-table" id="amcTable">
+              <thead>
+                <tr>
+                  <th>Client Name</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Next Cycle Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="amcBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="amcEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            <div>No AMC contracts in this cycle yet.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ FINANCE (admin only) ============ -->
+      <section id="financeView" style="display:none;">
+
+        <div class="fin-summary-row">
+          <div class="fin-summary-card income">
+            <div class="fin-summary-label">Total Income</div>
+            <div class="fin-summary-value" id="finSummaryIncome">₹0.00</div>
+          </div>
+          <div class="fin-summary-card expense">
+            <div class="fin-summary-label">Total Expense</div>
+            <div class="fin-summary-value" id="finSummaryExpense">₹0.00</div>
+          </div>
+          <div class="fin-summary-card net" id="finSummaryNetCard">
+            <div class="fin-summary-label">Net Balance</div>
+            <div class="fin-summary-value" id="finSummaryNet">₹0.00</div>
+          </div>
+        </div>
+        <div class="hint" style="margin:-6px 0 18px;">Summary reflects the entries matching your current filters below.</div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3 id="financeFormTitle">Add an entry</h3>
+              <div class="desc">Log a payment received or an amount spent. Use "Owner Drawings" for money taken out for personal/own use, so it stays visible in the books instead of getting mixed into business expenses.</div>
+            </div>
+          </div>
+
+          <div class="fin-type-tabs">
+            <button type="button" class="fin-type-tab active" id="finTypeIncomeBtn" data-type="income">+ Income</button>
+            <button type="button" class="fin-type-tab" id="finTypeExpenseBtn" data-type="expense">− Expense</button>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="fin_date" />
+            </div>
+            <div class="field">
+              <label>Category</label>
+              <select id="fin_category"></select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label id="finPartyLabel">Received From</label>
+              <input type="text" id="fin_party" placeholder="e.g. Client / Vendor / Staff name" />
+            </div>
+            <div class="field">
+              <label>Amount (₹)</label>
+              <input type="number" id="fin_amount" min="0" step="0.01" placeholder="0.00" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Payment Mode</label>
+              <select id="fin_paymentMode">
+                <option>Cash</option>
+                <option>Bank Transfer</option>
+                <option>UPI</option>
+                <option>Cheque</option>
+                <option>Card</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Notes</label>
+              <input type="text" id="fin_notes" placeholder="Optional" />
+            </div>
+          </div>
+
+          <div class="action-bar" style="margin-top:4px;">
+            <button class="btn btn-primary" id="saveFinanceBtn" style="width:auto;">Save Entry</button>
+            <button class="btn btn-ghost" id="cancelFinanceEditBtn" style="display:none;">Cancel edit</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Transactions</h3>
+              <div class="desc">Every income and expense entry, most recent first.</div>
+            </div>
+          </div>
+
+          <div class="fin-filter-row">
+            <input type="text" id="finSearch" placeholder="Search by party or notes…" />
+            <select id="finFilterType">
+              <option value="">All types</option>
+              <option value="income">Income only</option>
+              <option value="expense">Expense only</option>
+            </select>
+            <select id="finFilterCategory">
+              <option value="">All categories</option>
+            </select>
+            <input type="month" id="finFilterMonth" title="Filter by month" />
+            <input type="date" id="finFilterFrom" title="From date" />
+            <input type="date" id="finFilterTo" title="To date" />
+            <button class="btn btn-ghost btn-sm" id="clearFinanceFiltersBtn" style="width:auto;">Clear</button>
+          </div>
+
+          <div class="action-bar" style="margin-top:0; margin-bottom:16px;">
+            <button class="btn btn-ghost" id="downloadFinancePdfBtn">⬇ Download PDF</button>
+            <button class="btn btn-ghost" id="downloadFinanceExcelBtn">⬇ Download Excel</button>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="history-table" id="financeTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Party</th>
+                  <th>Mode</th>
+                  <th>Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="financeBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="financeEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            <div>No entries yet. Add your first income or expense above.</div>
+          </div>
+        </div>
+      </section>
+
       <!-- ============ STAFF ACCESS (admin only) ============ -->
       <section id="staffView" style="display:none;">
         <div class="panel">
@@ -290,10 +868,49 @@
   </div>
 </div>
 
+<!-- ================= BOQ Preview Modal ================= -->
+<div class="modal-overlay" id="boqPreviewModal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3>BOQ preview</h3>
+      <button class="modal-close" data-close="boqPreviewModal">×</button>
+    </div>
+    <div class="modal-body" style="background:#eee;">
+      <div class="invoice-sheet" id="boqSheetPreview"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="downloadBoqPdfFromPreviewBtn">Download PDF</button>
+    </div>
+  </div>
+</div>
+
 <!-- Off-screen sheet used only for print/PDF (kept out of view, not display:none,
      so the @media print rule can reveal it — display:none elements never print). -->
 <div id="printArea">
   <div class="invoice-sheet" id="invoiceSheetPrint"></div>
+</div>
+
+<!-- Off-screen sheet used only for ID card PNG/PDF export. Capturing the live
+     #idCardPreview directly (nested inside the .two-col flex layout) confuses
+     html2canvas's internal cloning into reporting the wrong width — this persistent,
+     isolated element (same fix pattern as #invoiceSheetPrint above, including using
+     position:absolute rather than fixed, which html2canvas's cloning mishandles)
+     is rebuilt from current state right before each export and captured instead. -->
+<!-- Off-screen sheet used only for BOQ PDF export — same persistent, absolutely-positioned
+     pattern as #invoiceSheetPrint / #financeSheetPrint above. -->
+<div style="position:absolute; left:-9999px; top:0; width:820px;">
+  <div class="invoice-sheet" id="boqSheetPrint"></div>
+</div>
+
+<div style="position:absolute; left:-9999px; top:0; width:254px;">
+  <div class="id-card" id="idCardExportSheet"></div>
+</div>
+
+<!-- Off-screen sheet used only for Finance statement PDF export — same persistent,
+     absolutely-positioned pattern as #idCardExportSheet above, rebuilt from the
+     currently filtered entries right before each export. -->
+<div style="position:absolute; left:-9999px; top:0; width:820px;">
+  <div class="invoice-sheet" id="financeSheetPrint"></div>
 </div>
 
 <div class="toast-stack" id="toastStack"></div>
@@ -302,12 +919,18 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="js/vendor/html2pdf.bundle.min.js"></script>
+<script src="js/vendor/xlsx.full.min.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/util.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/clients.js"></script>
 <script src="js/invoice.js"></script>
+<script src="js/boq.js"></script>
+<script src="js/idcards.js"></script>
+<script src="js/amc.js"></script>
 <script src="js/history.js"></script>
 <script src="js/staff.js"></script>
+<script src="js/finance.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

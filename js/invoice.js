@@ -343,6 +343,104 @@ function currentInvoiceDataOrNull() {
   return data;
 }
 
+// ---------------- Buyer autocomplete (suggests onboarded clients from js/clients.js) ----------------
+// Purely a convenience — the Buyer Name/Address fields stay plain free-text inputs, so
+// anyone not yet onboarded as a client can still be typed in manually.
+let buyerAutocompleteActiveIndex = -1;
+
+function filterClientsByField(query, field) {
+  const q = (query || "").trim().toLowerCase();
+  const source = clientsCache || [];
+  if (!q) return source.slice(0, 8);
+  return source.filter(c => (c[field] || "").toLowerCase().includes(q)).slice(0, 8);
+}
+
+function renderAutocompleteList(listEl, matches, hasQuery) {
+  buyerAutocompleteActiveIndex = -1;
+  if (matches.length === 0) {
+    listEl.innerHTML = `<div class="autocomplete-empty">${
+      hasQuery ? "No matching client — you can enter the details manually." : "No clients onboarded yet."
+    }</div>`;
+  } else {
+    listEl.innerHTML = matches.map(c => `
+      <div class="autocomplete-item" data-id="${escapeHtml(c.id)}">
+        <div class="ac-name">${escapeHtml(c.name)}</div>
+        <div class="ac-sub">${escapeHtml(c.address || "No address on file")}</div>
+      </div>
+    `).join("");
+    listEl.querySelectorAll(".autocomplete-item").forEach(item => {
+      // mousedown (not click) + preventDefault fires before the input's blur, so the
+      // selection registers before the dropdown would otherwise close on focus loss.
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        applyClientToBuyerFields(item.getAttribute("data-id"));
+        closeAutocomplete(listEl);
+      });
+    });
+  }
+  listEl.classList.add("open");
+}
+
+function closeAutocomplete(listEl) {
+  listEl.classList.remove("open");
+  buyerAutocompleteActiveIndex = -1;
+}
+
+function applyClientToBuyerFields(clientId) {
+  const client = (clientsCache || []).find(c => c.id === clientId);
+  if (!client) return;
+  document.getElementById("f_buyerName").value = client.name || "";
+  document.getElementById("f_buyerAddress").value = client.address || "";
+  if (client.email) document.getElementById("f_buyerEmail").value = client.email;
+  if (client.contact) document.getElementById("f_buyerPhone").value = client.contact;
+}
+
+function wireBuyerAutocomplete() {
+  const nameInput = document.getElementById("f_buyerName");
+  const addressInput = document.getElementById("f_buyerAddress");
+  const nameList = document.getElementById("buyerNameSuggestions");
+  const addressList = document.getElementById("buyerAddressSuggestions");
+  const pairs = [[nameInput, nameList, "name"], [addressInput, addressList, "address"]];
+
+  async function ensureClientsLoaded() {
+    if (!clientsCache.length && typeof loadClientsCache === "function") {
+      await loadClientsCache();
+    }
+  }
+
+  pairs.forEach(([input, list, field]) => {
+    const refresh = () => renderAutocompleteList(list, filterClientsByField(input.value, field), !!input.value.trim());
+    input.addEventListener("focus", async () => { await ensureClientsLoaded(); refresh(); });
+    input.addEventListener("input", refresh);
+    input.addEventListener("blur", () => { setTimeout(() => closeAutocomplete(list), 150); });
+
+    input.addEventListener("keydown", (e) => {
+      if (!list.classList.contains("open")) return;
+      const items = Array.from(list.querySelectorAll(".autocomplete-item"));
+      if (!items.length) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        buyerAutocompleteActiveIndex = Math.min(buyerAutocompleteActiveIndex + 1, items.length - 1);
+        items.forEach((it, i) => it.classList.toggle("active", i === buyerAutocompleteActiveIndex));
+        items[buyerAutocompleteActiveIndex].scrollIntoView({ block: "nearest" });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        buyerAutocompleteActiveIndex = Math.max(buyerAutocompleteActiveIndex - 1, 0);
+        items.forEach((it, i) => it.classList.toggle("active", i === buyerAutocompleteActiveIndex));
+        items[buyerAutocompleteActiveIndex].scrollIntoView({ block: "nearest" });
+      } else if (e.key === "Enter") {
+        if (buyerAutocompleteActiveIndex >= 0) {
+          e.preventDefault();
+          applyClientToBuyerFields(items[buyerAutocompleteActiveIndex].getAttribute("data-id"));
+          closeAutocomplete(list);
+        }
+      } else if (e.key === "Escape") {
+        closeAutocomplete(list);
+      }
+    });
+  });
+}
+
 // ---------------- Preview / Print ----------------
 function openPreview() {
   const data = collectFormData();
