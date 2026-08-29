@@ -162,7 +162,16 @@ async function uploadClientDocument() {
         base64Data
       })
     });
-    const result = await resp.json();
+    const rawText = await resp.text();
+    let result;
+    try {
+      result = JSON.parse(rawText);
+    } catch (parseErr) {
+      // Apps Script sent back HTML/text instead of JSON — almost always means the
+      // deployment's access isn't set to "Anyone" (it's asking for a Google sign-in),
+      // or the Web App URL is wrong/not deployed.
+      throw new Error("The Apps Script Web App didn't return a valid response (got a sign-in page or an error page instead of JSON). Check the deployment's \"Who has access\" is set to \"Anyone\", and that the Web App URL in js/appscript-config.js is correct.");
+    }
     if (!result.success) throw new Error(result.error || "Upload failed.");
 
     const user = auth.currentUser;
@@ -187,7 +196,7 @@ async function uploadClientDocument() {
   } catch (err) {
     console.error(err);
     hint.style.display = "block";
-    hint.textContent = "Upload failed — check your internet connection and that the Apps Script Web App is deployed and reachable.";
+    hint.textContent = `Upload failed: ${err.message || "Unknown error"} — see the troubleshooting steps in README.md → "Client Documents via Google Drive" if this doesn't make sense.`;
     showToast(err.message || "Couldn't upload that document.", "error");
   } finally {
     btn.disabled = false;

@@ -65,6 +65,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Employee Management
     </button>
+    <button class="nav-item" data-view="suppliersView">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18l-2 12H5L3 3z"/><path d="M3 3 2 1"/><circle cx="8" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg>
+      Suppliers
+    </button>
     <button class="nav-item" data-view="financeView" id="financeNavItem" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/><circle cx="17" cy="15" r="1.5"/></svg>
       Finance
@@ -674,7 +678,7 @@
           <div class="panel-head">
             <div>
               <h3 id="amcFormTitle">Add an AMC contract</h3>
-              <div class="desc">Pick a cycle and the contract lands under that cycle's tab below. Each cycle period gets its own recurring due date (e.g. a 3-month cycle running Jan 1–Dec 31 is due Mar 31, Jun 30, Sep 30 and Dec 31) — whichever is next is flagged red starting 10 days before it.</div>
+              <div class="desc">Pick a cycle and the contract lands under that cycle's tab below. Next Cycle Date auto-fills from the Start Date + Cycle, but you can set/change it directly any time — e.g. after a visit, just update it to the next due date. You'll get a red "due soon" flag starting 10 days before whichever comes first: the Next Cycle Date or the Contract End Date.</div>
             </div>
           </div>
           <div class="field-row">
@@ -702,6 +706,10 @@
               <input type="date" id="amc_endDate" />
             </div>
           </div>
+          <div class="field" style="max-width:280px;">
+            <label>Next Cycle Date <span style="font-weight:400;color:#8a7d7c;">(auto-filled, editable)</span></label>
+            <input type="date" id="amc_nextCycleDate" />
+          </div>
           <div class="action-bar" style="margin-top:4px;">
             <button class="btn btn-primary" id="saveAmcBtn" style="width:auto;">Save Contract</button>
             <button class="btn btn-ghost" id="cancelAmcEditBtn" style="display:none;">Cancel edit</button>
@@ -725,6 +733,7 @@
                   <th>Start Date</th>
                   <th>End Date</th>
                   <th>Next Cycle Date</th>
+                  <th>Next Alert</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -814,6 +823,99 @@
           <div class="empty-state" id="employeesEmpty" style="display:none;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
             <div>No employees added yet. Add your first one above.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SUPPLIERS ============ -->
+      <section id="suppliersView" style="display:none;">
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3 id="supplierFormTitle">Add / update a price</h3>
+              <div class="desc">Add a brand-new item, add another company's quote for an item that's already here, or revise a price — all through this one form. If the Category + Item + Company you enter already exists, its price is updated instead of adding a duplicate row.</div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>Category</label>
+              <input type="text" id="sp_category" list="supplierCategoryDatalist" placeholder="e.g. MS Pipe" autocomplete="off" />
+              <datalist id="supplierCategoryDatalist"></datalist>
+            </div>
+            <div class="field">
+              <label>Item Description</label>
+              <input type="text" id="sp_item" list="supplierItemDatalist" placeholder="e.g. 150mm nominal dia" autocomplete="off" />
+              <datalist id="supplierItemDatalist"></datalist>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Company</label>
+              <input type="text" id="sp_company" list="supplierCompanyDatalist" placeholder="Supplier / company name" autocomplete="off" />
+              <datalist id="supplierCompanyDatalist"></datalist>
+            </div>
+            <div class="field">
+              <label>Make / Brand <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <input type="text" id="sp_make" placeholder="e.g. Jindal, Normex…" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field" style="max-width:220px;">
+              <label>Unit</label>
+              <input type="text" id="sp_unit" list="supplierUnitDatalist" placeholder="e.g. Mtrs, No" autocomplete="off" />
+              <datalist id="supplierUnitDatalist">
+                <option value="No"></option>
+                <option value="Nos"></option>
+                <option value="Mtrs"></option>
+                <option value="Mtr"></option>
+              </datalist>
+            </div>
+            <div class="field" style="max-width:220px;">
+              <label>Rate (₹)</label>
+              <input type="number" id="sp_rate" min="0" step="0.01" placeholder="0.00" />
+            </div>
+          </div>
+
+          <div class="action-bar" style="margin-top:4px;">
+            <button class="btn btn-primary" id="saveSupplierPriceBtn" style="width:auto;">Save Price</button>
+            <button class="btn btn-ghost" id="cancelSupplierEditBtn" style="display:none;">Cancel edit</button>
+          </div>
+          <div class="hint" id="supplierFormHint" style="display:none; margin-top:10px;"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Supplier price comparison</h3>
+              <div class="desc">Search an item (e.g. "150mm nominal dia") to see every company's quoted price side by side. The lowest price for each item is highlighted.</div>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="supplierSearch" placeholder="Search by item, category, or company…" />
+            <button class="btn btn-ghost" id="refreshSupplierPricesBtn" type="button">Refresh</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="history-table" id="supplierPricesTable">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Item</th>
+                  <th>Company</th>
+                  <th>Make</th>
+                  <th>Unit</th>
+                  <th>Rate</th>
+                  <th>Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="supplierPricesBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="supplierPricesEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h18l-2 12H5L3 3z"/><circle cx="8" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg>
+            <div>No supplier prices yet.</div>
           </div>
         </div>
       </section>
@@ -1333,6 +1435,7 @@
 <script src="js/amc.js"></script>
 <script src="js/amc-finance.js"></script>
 <script src="js/employees.js"></script>
+<script src="js/suppliers.js"></script>
 <script src="js/history.js"></script>
 <script src="js/staff.js"></script>
 <script src="js/finance.js"></script>

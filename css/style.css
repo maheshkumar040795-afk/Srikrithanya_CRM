@@ -176,7 +176,15 @@ select:focus-visible, textarea:focus-visible {
 .id-card-row .lbl { display: block; color: #8a7d7c; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-size: 0.52rem; }
 .id-card-row .val { font-weight: 600; color: var(--ink); word-break: break-word; }
 .id-card-footer { margin-top: auto; padding: 2px 12px 10px; text-align: center; border-top: 1px dashed var(--line-strong); }
-.id-card-sign { height: 26px; object-fit: contain; }
+.id-card-sign {
+  display: block; height: 26px; width: 84px; object-fit: contain; margin: 0 auto;
+  /* Explicit width (not just height) matters here: html2canvas — used for both the
+     PNG and PDF ID card exports — sometimes mis-computes an image's "auto" dimension
+     and renders it at its full natural size instead, which overflowed the signature
+     to the left instead of it appearing centered above "Director". display:block +
+     margin:0 auto centers it reliably regardless, instead of relying on the parent's
+     text-align (which is also not honored consistently by html2canvas for images). */
+}
 .id-card-sign-label { font-size: 0.5rem; color: #8a7d7c; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-top: 1px; }
 
 /* ---------------- Small table thumbnails (ID Cards list) ---------------- */

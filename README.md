@@ -167,6 +167,47 @@ first upload. If you ever redeploy the Apps Script with code changes, choose **D
 Manage deployments → edit (pencil) → New version** rather than creating a brand-new
 deployment, so the Web App URL already saved in `js/appscript-config.js` keeps working.
 
+## 7. Supplier Prices via Google Sheets (optional)
+
+The **Suppliers** tab is a shared price-comparison list — search an item (e.g. "150mm
+nominal dia") and see every company's quoted price side by side, with the lowest
+highlighted. It reuses the same Apps Script Web App as Client Documents (same URL, same
+secret — no separate deployment needed), but stores its data as rows in a Google Sheet
+instead of a Drive file, since that's naturally tabular data you might also want to
+glance at directly in Sheets.
+
+The Apps Script already ships with all 33 prices read from your uploaded
+`QUOTATION_COMPANIES_DETAILS.xlsx` (all 4 of its sheets — MS Pipe, Sprinkler, Butterfly
+Valve, Fire Fighting), ready to load in with one click.
+
+1. **Create the Google Sheet.** Go to **sheets.google.com** → **Blank spreadsheet** →
+   name it e.g. `Srikrithanya Supplier Prices` → copy its ID from the URL:
+   `https://docs.google.com/spreadsheets/d/`**`THIS_PART_IS_THE_SHEET_ID`**`/edit`.
+2. **Paste that ID into the Apps Script.** Open your Apps Script project (the one from
+   step 6 — same project, same deployment) → find `SUPPLIER_SHEET_ID` near the top →
+   replace `PASTE_YOUR_SUPPLIER_SHEET_ID_HERE` with the ID from step 1 → **Save**.
+3. **Run the one-time import.** In the Apps Script editor, use the function dropdown
+   (top toolbar, next to Debug) to select **`seedSupplierPrices`** → click **Run** ▶. The
+   first time, it'll ask you to authorize Sheets access — allow it. Check the Sheet you
+   made in step 1: it should now have a `SupplierPrices` tab with 33 rows.
+4. **Redeploy.** Since you edited the script, go to **Deploy → Manage deployments** →
+   pencil icon → **New version** → **Deploy**. This keeps the same Web App URL that's
+   already saved in `js/appscript-config.js`, so nothing else needs to change.
+
+That's it — open the **Suppliers** tab in the CRM and search `150mm nominal dia` to see
+it pull in prices from all 4 companies that quoted it. From there:
+- **New item or a new company's quote on an existing item** → just fill in the Add /
+  Update form and Save; it always adds a fresh row when that exact Category + Item +
+  Company combination doesn't exist yet.
+- **An existing company revising their price** → fill in the same Category, Item, and
+  Company exactly as before (the datalist suggestions help here) with the new Rate, and
+  Save — the Apps Script matches that combination and updates the price in place instead
+  of duplicating the row. You can also open a row's ✎ Edit to prefill the form.
+
+Since this lives in a real Google Sheet, you (or anyone with edit access to it) can also
+open the Sheet directly in Google Sheets any time to bulk-edit, filter, or sort — the CRM
+just reads/writes the same rows.
+
 ---
 
 ## How things work
@@ -227,6 +268,11 @@ deployment, so the Web App URL already saved in `js/appscript-config.js` keeps w
   (search, type, category, date range). Filtered results can be exported as a **PDF
   statement** (via the same `html2pdf.js` used for invoices) or an **Excel workbook**
   (via `SheetJS`, bundled in `js/vendor/xlsx.full.min.js`, also no external CDN).
+- **Suppliers tab** — a shared, searchable supplier price-comparison list (Category,
+  Item, Company, Make, Unit, Rate), backed by a Google Sheet rather than Firestore — see
+  section 7 above for setup. Adding a price for a Category+Item+Company that already
+  exists revises it in place instead of duplicating a row, so the same form on the CRM
+  side covers new items, new companies quoting an existing item, and price revisions.
 
 ## Editing the seller's fixed details
 

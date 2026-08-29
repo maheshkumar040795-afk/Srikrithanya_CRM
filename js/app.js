@@ -3,7 +3,7 @@
 // ============================================================
 
 function switchView(viewId) {
-  ["invoiceView", "historyView", "clientsView", "idCardsView", "boqView", "amcView", "employeesView", "financeView", "staffView"].forEach(id => {
+  ["invoiceView", "historyView", "clientsView", "idCardsView", "boqView", "amcView", "employeesView", "suppliersView", "financeView", "staffView"].forEach(id => {
     document.getElementById(id).style.display = (id === viewId) ? "block" : "none";
   });
   document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
@@ -17,6 +17,7 @@ function switchView(viewId) {
     boqView: ["BOQ", "Bill of quantities / quotations, with GST and PDF export"],
     amcView: ["AMC", "Annual maintenance contracts, by renewal cycle"],
     employeesView: ["Employee Management", "Permanent & temporary staff, attendance and expenses"],
+    suppliersView: ["Suppliers", "Compare supplier prices by item, synced to Google Sheets"],
     financeView: ["Finance", "Track income, expenses, and company cash flow"],
     staffView: ["Staff Access", "Manage who can sign in to this CRM"]
   };
@@ -31,6 +32,7 @@ function switchView(viewId) {
   if (viewId === "boqView") loadBoqList();
   if (viewId === "amcView") loadAmcEntries();
   if (viewId === "employeesView") loadEmployeesList();
+  if (viewId === "suppliersView") loadSupplierPrices();
   if (viewId === "financeView") loadFinanceEntries();
   if (viewId === "staffView") loadStaffList();
 }
@@ -123,6 +125,7 @@ function closeSidebar() {
   document.getElementById("saveAmcBtn").addEventListener("click", saveAmcContract);
   document.getElementById("cancelAmcEditBtn").addEventListener("click", resetAmcForm);
   wireAmcSubtabs();
+  wireAmcNextCycleAutoSuggest();
   wireAmcSearch();
   wireAmcNotifyBanner();
   checkAmcNotificationsOnBoot(); // shows the red "due/overdue" banner on login, if any
@@ -140,6 +143,12 @@ function closeSidebar() {
   document.getElementById("downloadEmployeeAttendanceExcelBtn").addEventListener("click", downloadEmployeeAttendanceExcel);
   document.getElementById("downloadEmployeeExpenseExcelBtn").addEventListener("click", downloadEmployeeExpenseExcel);
   resetEmployeeForm();
+
+  // Suppliers
+  document.getElementById("saveSupplierPriceBtn").addEventListener("click", saveSupplierPrice);
+  document.getElementById("cancelSupplierEditBtn").addEventListener("click", resetSupplierPriceForm);
+  document.getElementById("refreshSupplierPricesBtn").addEventListener("click", loadSupplierPrices);
+  wireSupplierSearch();
 
   // BOQ
   document.getElementById("addBoqRowBtn").addEventListener("click", () => addBoqItemRow());

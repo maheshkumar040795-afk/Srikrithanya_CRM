@@ -65,27 +65,42 @@ function fmtShortDate(iso) {
 
 // ---------------- Status calculation ----------------
 
-/** Finds whichever cycle due date is next (or today), and flags it red once it's
- *  within ALERT_LEAD_DAYS. If every due date — including the contract End Date —
- *  has already passed, the contract is overdue. */
+/** Finds whichever due date is more urgent — the contract's Next Cycle Date or its
+ *  Contract End Date — and flags it red once it's within ALERT_LEAD_DAYS. Both are
+ *  checked independently so an End Date alert always fires on its own even if the
+ *  Next Cycle Date is further out (or missing). Older contracts saved before Next
+ *  Cycle Date existed fall back to the auto-computed cycle schedule. */
 function computeAmcStatus(entry) {
   const today = new Date(todayISO() + "T00:00:00");
-  const dates = computeAmcCycleDates(entry.startDate, entry.endDate, entry.cycle);
-  for (const ds of dates) {
-    const d = new Date(ds + "T00:00:00");
-    const daysLeft = Math.round((d - today) / 86400000);
-    if (daysLeft >= 0) {
-      return { status: daysLeft <= AMC_ALERT_LEAD_DAYS ? "due" : "ok", daysLeft, dueDate: ds };
+  const candidates = [];
+
+  if (entry.nextCycleDate) {
+    candidates.push({ label: "Next Cycle", date: entry.nextCycleDate });
+  } else if (entry.startDate && entry.endDate && entry.cycle) {
+    const autoDates = computeAmcCycleDates(entry.startDate, entry.endDate, entry.cycle).slice(0, -1); // exclude endDate, handled separately below
+    if (autoDates.length) {
+      const upcoming = autoDates.find(ds => new Date(ds + "T00:00:00") >= today);
+      candidates.push({ label: "Next Cycle", date: upcoming || autoDates[autoDates.length - 1] });
     }
   }
-  const lastDate = dates[dates.length - 1];
-  const daysLeft = Math.round((new Date(lastDate + "T00:00:00") - today) / 86400000);
-  return { status: "overdue", daysLeft, dueDate: lastDate };
+  if (entry.endDate) candidates.push({ label: "Contract End", date: entry.endDate });
+
+  const rank = { overdue: 2, due: 1, ok: 0 };
+  let best = null;
+  candidates.forEach(c => {
+    const d = new Date(c.date + "T00:00:00");
+    const daysLeft = Math.round((d - today) / 86400000);
+    const status = daysLeft < 0 ? "overdue" : (daysLeft <= AMC_ALERT_LEAD_DAYS ? "due" : "ok");
+    if (!best || rank[status] > rank[best.status] || (rank[status] === rank[best.status] && daysLeft < best.daysLeft)) {
+      best = { status, daysLeft, dueDate: c.date, label: c.label };
+    }
+  });
+  return best || { status: "ok", daysLeft: null, dueDate: entry.endDate, label: "Contract End" };
 }
 
 function amcStatusLabel(s) {
-  if (s.status === "overdue") return `Overdue by ${Math.abs(s.daysLeft)}d (${fmtShortDate(s.dueDate)})`;
-  if (s.status === "due") return (s.daysLeft === 0 ? "Due today" : `Due in ${s.daysLeft}d`) + ` (${fmtShortDate(s.dueDate)})`;
+  if (s.status === "overdue") return `Overdue by ${Math.abs(s.daysLeft)}d — ${s.label} (${fmtShortDate(s.dueDate)})`;
+  if (s.status === "due") return (s.daysLeft === 0 ? "Due today" : `Due in ${s.daysLeft}d`) + ` — ${s.label} (${fmtShortDate(s.dueDate)})`;
   return "Active";
 }
 
@@ -203,7 +218,8 @@ function renderAmcTable(list) {
       <td><strong>${escapeHtml(e.clientName)}</strong></td>
       <td>${fmtDate(e.startDate)}</td>
       <td>${fmtDate(e.endDate)}</td>
-      <td>${fmtDate(s.dueDate)}</td>
+      <td>${e.nextCycleDate ? fmtDate(e.nextCycleDate) : "—"}</td>
+      <td>${fmtDate(s.dueDate)} <span style="color:#8a7d7c; font-size:0.78rem;">(${escapeHtml(s.label)})</span></td>
       <td><span class="pill status-${s.status}">${amcStatusLabel(s)}</span></td>
       <td>
         <div class="row-actions">
@@ -247,6 +263,7 @@ function loadAmcIntoForm(entry) {
   document.getElementById("amc_cycle").value = entry.cycle || "3m";
   document.getElementById("amc_startDate").value = entry.startDate || "";
   document.getElementById("amc_endDate").value = entry.endDate || "";
+  document.getElementById("amc_nextCycleDate").value = entry.nextCycleDate || "";
   document.getElementById("amcFormTitle").textContent = `Editing ${entry.clientName}`;
   document.getElementById("saveAmcBtn").textContent = "Update Contract";
   document.getElementById("cancelAmcEditBtn").style.display = "inline-flex";
@@ -259,9 +276,23 @@ function resetAmcForm() {
   document.getElementById("amc_cycle").value = "3m";
   document.getElementById("amc_startDate").value = "";
   document.getElementById("amc_endDate").value = "";
+  document.getElementById("amc_nextCycleDate").value = "";
   document.getElementById("amcFormTitle").textContent = "Add an AMC contract";
   document.getElementById("saveAmcBtn").textContent = "Save Contract";
   document.getElementById("cancelAmcEditBtn").style.display = "none";
+}
+
+/** Auto-fills Next Cycle Date from Start Date + Cycle the first time both are set,
+ *  purely as a convenience starting point — it never overwrites a value the user
+ *  already typed or edited themselves. */
+function suggestAmcNextCycleDate() {
+  const startDate = document.getElementById("amc_startDate").value;
+  const endDate = document.getElementById("amc_endDate").value;
+  const cycle = document.getElementById("amc_cycle").value;
+  const nextInput = document.getElementById("amc_nextCycleDate");
+  if (!startDate || !endDate || nextInput.value) return;
+  const autoDates = computeAmcCycleDates(startDate, endDate, cycle).slice(0, -1);
+  if (autoDates.length) nextInput.value = autoDates[0];
 }
 
 async function saveAmcContract() {
@@ -269,12 +300,13 @@ async function saveAmcContract() {
   const cycle = document.getElementById("amc_cycle").value;
   const startDate = document.getElementById("amc_startDate").value;
   const endDate = document.getElementById("amc_endDate").value;
+  const nextCycleDate = document.getElementById("amc_nextCycleDate").value;
 
   if (!clientName) { showToast("Client name is required.", "error"); return; }
   if (!startDate || !endDate) { showToast("Both start and end dates are required.", "error"); return; }
   if (endDate < startDate) { showToast("End date can't be before the start date.", "error"); return; }
 
-  const data = { clientName, cycle, startDate, endDate };
+  const data = { clientName, cycle, startDate, endDate, nextCycleDate };
   const wasEditing = !!editingAmcId;
   const btn = document.getElementById("saveAmcBtn");
   const original = btn.textContent;
@@ -314,6 +346,12 @@ async function saveAmcContract() {
 function wireAmcSubtabs() {
   document.querySelectorAll(".amc-subtab").forEach(btn => {
     btn.addEventListener("click", () => switchAmcSubtab(btn.getAttribute("data-cycle")));
+  });
+}
+
+function wireAmcNextCycleAutoSuggest() {
+  ["amc_startDate", "amc_endDate", "amc_cycle"].forEach(id => {
+    document.getElementById(id).addEventListener("change", suggestAmcNextCycleDate);
   });
 }
 
