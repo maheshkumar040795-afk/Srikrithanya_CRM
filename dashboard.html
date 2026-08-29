@@ -61,6 +61,10 @@
       AMC
       <span class="nav-badge" id="amcNavBadge" style="display:none;"></span>
     </button>
+    <button class="nav-item" data-view="employeesView">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Employee Management
+    </button>
     <button class="nav-item" data-view="financeView" id="financeNavItem" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/><circle cx="17" cy="15" r="1.5"/></svg>
       Finance
@@ -195,7 +199,7 @@
           <div class="panel-head">
             <div>
               <h3>Items / services</h3>
-              <div class="desc">Amount = Qty × Rate. Totals and 18% GST (9% CGST + 9% SGST) are calculated automatically.</div>
+              <div class="desc">Amount = Qty × Rate. Choose the GST type below — IGST, CGST/SGST, or Exempted.</div>
             </div>
           </div>
 
@@ -217,11 +221,36 @@
           </div>
           <button class="add-row-btn" id="addRowBtn" type="button">+ Add item</button>
 
+          <div class="field" style="max-width:220px; margin-top:14px;">
+            <label>GST Type</label>
+            <select id="f_gstType">
+              <option value="CGST_SGST">CGST / SGST</option>
+              <option value="IGST">IGST</option>
+              <option value="EXEMPTED">Exempted</option>
+            </select>
+          </div>
+
+          <div class="field-row" id="f_gstInputsCgstSgst">
+            <div class="field">
+              <label>CGST %</label>
+              <input type="number" id="f_cgstPercent" min="0" step="0.01" value="9" />
+            </div>
+            <div class="field">
+              <label>SGST %</label>
+              <input type="number" id="f_sgstPercent" min="0" step="0.01" value="9" />
+            </div>
+          </div>
+          <div class="field" id="f_gstInputsIgst" style="max-width:160px; display:none;">
+            <label>IGST %</label>
+            <input type="number" id="f_igstPercent" min="0" step="0.01" value="18" />
+          </div>
+
           <div class="totals-box">
             <table>
               <tr><td>Taxable Value</td><td id="t_taxable">₹0.00</td></tr>
-              <tr><td>CGST @ 9%</td><td id="t_cgst">₹0.00</td></tr>
-              <tr><td>SGST @ 9%</td><td id="t_sgst">₹0.00</td></tr>
+              <tr id="t_igstRow" style="display:none;"><td id="t_igstLabel">IGST @ 18%</td><td id="t_igst">₹0.00</td></tr>
+              <tr id="t_cgstRow"><td id="t_cgstLabel">CGST @ 9%</td><td id="t_cgst">₹0.00</td></tr>
+              <tr id="t_sgstRow"><td id="t_sgstLabel">SGST @ 9%</td><td id="t_sgst">₹0.00</td></tr>
               <tr class="grand-total"><td>Total (Net Amount)</td><td id="t_total">₹0.00</td></tr>
             </table>
           </div>
@@ -377,6 +406,18 @@
                 <input type="text" id="i_code" placeholder="e.g. SRK-EMP-01" />
               </div>
             </div>
+            <div class="field" style="max-width:260px;">
+              <label>Role <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <input type="text" id="i_role" list="idCardRoleDatalist" placeholder="e.g. Site Engineer" autocomplete="off" />
+              <datalist id="idCardRoleDatalist">
+                <option value="Site Engineer"></option>
+                <option value="Fitter"></option>
+                <option value="Welder"></option>
+                <option value="Helper"></option>
+                <option value="Contract Labour"></option>
+              </datalist>
+              <div class="hint">Pick a suggestion or type a new role — it's saved for next time too.</div>
+            </div>
             <div class="field" style="max-width:220px;">
               <label>Blood Group <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
               <select id="i_blood">
@@ -414,6 +455,7 @@
               </div>
               <div class="id-card-body">
                 <div class="id-card-name" id="idc_name">Employee Name</div>
+                <div class="id-card-row" id="idc_roleRow"><span class="lbl">Role</span><span class="val" id="idc_role">—</span></div>
                 <div class="id-card-row"><span class="lbl">Emp. Code</span><span class="val" id="idc_code">—</span></div>
                 <div class="id-card-row"><span class="lbl">Contact</span><span class="val" id="idc_contact">—</span></div>
                 <div class="id-card-row" id="idc_bloodRow"><span class="lbl">Blood Group</span><span class="val" id="idc_blood">—</span></div>
@@ -447,6 +489,7 @@
                   <th></th>
                   <th>Name</th>
                   <th>Code</th>
+                  <th>Role</th>
                   <th>Contact</th>
                   <th>Blood Group</th>
                   <th>Actions</th>
@@ -549,16 +592,36 @@
           </div>
           <button class="add-row-btn" id="addBoqRowBtn" type="button">+ Add item</button>
 
-          <div class="field" style="max-width:160px; margin-top:14px;">
-            <label>GST %</label>
-            <input type="number" id="b_gstPercent" min="0" step="0.01" value="18" />
+          <div class="field" style="max-width:220px; margin-top:14px;">
+            <label>GST Type</label>
+            <select id="b_gstType">
+              <option value="CGST_SGST">CGST / SGST</option>
+              <option value="IGST">IGST</option>
+              <option value="EXEMPTED">Exempted</option>
+            </select>
+          </div>
+
+          <div class="field-row" id="b_gstInputsCgstSgst">
+            <div class="field">
+              <label>CGST %</label>
+              <input type="number" id="b_cgstPercent" min="0" step="0.01" value="9" />
+            </div>
+            <div class="field">
+              <label>SGST %</label>
+              <input type="number" id="b_sgstPercent" min="0" step="0.01" value="9" />
+            </div>
+          </div>
+          <div class="field" id="b_gstInputsIgst" style="max-width:160px; display:none;">
+            <label>IGST %</label>
+            <input type="number" id="b_igstPercent" min="0" step="0.01" value="18" />
           </div>
 
           <div class="totals-box">
             <table>
               <tr><td>Taxable Value</td><td id="b_taxable">₹0.00</td></tr>
-              <tr><td id="b_cgstLabel">CGST @ 9%</td><td id="b_cgst">₹0.00</td></tr>
-              <tr><td id="b_sgstLabel">SGST @ 9%</td><td id="b_sgst">₹0.00</td></tr>
+              <tr id="b_igstRow" style="display:none;"><td id="b_igstLabel">IGST @ 18%</td><td id="b_igst">₹0.00</td></tr>
+              <tr id="b_cgstRow"><td id="b_cgstLabel">CGST @ 9%</td><td id="b_cgst">₹0.00</td></tr>
+              <tr id="b_sgstRow"><td id="b_sgstLabel">SGST @ 9%</td><td id="b_sgst">₹0.00</td></tr>
               <tr class="grand-total"><td>Total (Net Amount)</td><td id="b_total">₹0.00</td></tr>
             </table>
           </div>
@@ -676,6 +739,85 @@
         </div>
       </section>
 
+      <!-- ============ EMPLOYEE MANAGEMENT ============ -->
+      <section id="employeesView" style="display:none;">
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3 id="employeeFormTitle">Add an employee</h3>
+              <div class="desc">Add permanent or temporary workforce. Each employee gets their own Attendance and Expense/Advance ledger below, tracked date-wise.</div>
+            </div>
+          </div>
+
+          <div class="fin-type-tabs">
+            <button type="button" class="fin-type-tab active" id="empTypePermanentBtn" data-type="permanent">Permanent</button>
+            <button type="button" class="fin-type-tab" id="empTypeTemporaryBtn" data-type="temporary">Temporary</button>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>Employee Name</label>
+              <input type="text" id="emp_name" placeholder="Full name" />
+            </div>
+            <div class="field">
+              <label>Role <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <input type="text" id="emp_role" list="employeeRoleDatalist" placeholder="e.g. Site Engineer" autocomplete="off" />
+              <datalist id="employeeRoleDatalist">
+                <option value="Site Engineer"></option>
+                <option value="Fitter"></option>
+                <option value="Welder"></option>
+                <option value="Helper"></option>
+                <option value="Contract Labour"></option>
+              </datalist>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Contact <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <input type="tel" id="emp_contact" placeholder="91XXXXXXXXXX" />
+            </div>
+            <div class="field">
+              <label>Joined On <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <input type="date" id="emp_joinDate" />
+            </div>
+          </div>
+
+          <div class="action-bar" style="margin-top:4px;">
+            <button class="btn btn-primary" id="saveEmployeeBtn" style="width:auto;">Save Employee</button>
+            <button class="btn btn-ghost" id="cancelEmployeeEditBtn" style="display:none;">Cancel edit</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="amc-subtabs">
+            <button type="button" class="amc-subtab active" data-emplist="permanent">Permanent Employees <span class="badge-count" id="empCountPermanent" style="display:none;"></span></button>
+            <button type="button" class="amc-subtab" data-emplist="temporary">Temporary Employees <span class="badge-count" id="empCountTemporary" style="display:none;"></span></button>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="employeeSearch" placeholder="Search by name or role…" />
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="history-table" id="employeesTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Contact</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="employeesBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="employeesEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <div>No employees added yet. Add your first one above.</div>
+          </div>
+        </div>
+      </section>
+
       <!-- ============ FINANCE (admin only) ============ -->
       <section id="financeView" style="display:none;">
 
@@ -740,8 +882,8 @@
               </select>
             </div>
             <div class="field">
-              <label>Notes</label>
-              <input type="text" id="fin_notes" placeholder="Optional" />
+              <label id="finNotesLabel">Income Description</label>
+              <input type="text" id="fin_notes" placeholder="What's this income for?" />
             </div>
           </div>
 
@@ -788,6 +930,7 @@
                   <th>Type</th>
                   <th>Category</th>
                   <th>Party</th>
+                  <th>Description</th>
                   <th>Mode</th>
                   <th>Amount</th>
                   <th>Actions</th>
@@ -884,6 +1027,264 @@
   </div>
 </div>
 
+<!-- ================= AMC Finance Modal ================= -->
+<div class="modal-overlay" id="amcFinanceModal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3 id="amcFinanceModalTitle">Finance</h3>
+      <button class="modal-close" data-close="amcFinanceModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fin-summary-row">
+        <div class="fin-summary-card income">
+          <div class="fin-summary-label">AMC Amount Received</div>
+          <div class="fin-summary-value" id="amcFinSummaryAmount">₹0.00</div>
+        </div>
+        <div class="fin-summary-card expense">
+          <div class="fin-summary-label">Total Expense</div>
+          <div class="fin-summary-value" id="amcFinSummaryExpense">₹0.00</div>
+        </div>
+        <div class="fin-summary-card net" id="amcFinSummaryBalanceCard">
+          <div class="fin-summary-label">Balance</div>
+          <div class="fin-summary-value" id="amcFinSummaryBalance">₹0.00</div>
+        </div>
+      </div>
+
+      <div class="fin-type-tabs" style="margin-top:18px;">
+        <button type="button" class="fin-type-tab active" id="amcFinTypeAmountBtn" data-type="amount">+ AMC Amount</button>
+        <button type="button" class="fin-type-tab" id="amcFinTypeExpenseBtn" data-type="expense">− Expense</button>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="amcFin_date" />
+        </div>
+        <div class="field">
+          <label>Amount (₹)</label>
+          <input type="number" id="amcFin_amount" min="0" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+      <div class="field" id="amcFin_descriptionField" style="display:none;">
+        <label>Description</label>
+        <input type="text" id="amcFin_description" placeholder="e.g. Spare parts for fire hydrant valve" />
+      </div>
+
+      <div class="action-bar" style="margin-top:4px; margin-bottom:18px;">
+        <button class="btn btn-primary" id="saveAmcFinanceBtn" style="width:auto;">Add Entry</button>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="history-table" id="amcFinanceTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="amcFinanceBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="amcFinanceEmpty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <div>No entries yet for this AMC.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Employee Attendance Modal ================= -->
+<div class="modal-overlay" id="employeeAttendanceModal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3 id="employeeAttendanceModalTitle">Attendance</h3>
+      <button class="modal-close" data-close="employeeAttendanceModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fin-summary-row">
+        <div class="fin-summary-card income">
+          <div class="fin-summary-label">Present</div>
+          <div class="fin-summary-value" id="empAttSummaryPresent">0</div>
+        </div>
+        <div class="fin-summary-card expense">
+          <div class="fin-summary-label">Absent</div>
+          <div class="fin-summary-value" id="empAttSummaryAbsent">0</div>
+        </div>
+        <div class="fin-summary-card net">
+          <div class="fin-summary-label">Half Day / Leave</div>
+          <div class="fin-summary-value" id="empAttSummaryOther">0</div>
+        </div>
+      </div>
+
+      <div class="field-row" style="margin-top:18px;">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="empAtt_date" />
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="empAtt_status">
+            <option value="present">Present</option>
+            <option value="absent">Absent</option>
+            <option value="half-day">Half Day</option>
+            <option value="leave">Leave</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Note <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+        <input type="text" id="empAtt_note" placeholder="e.g. Site visit, sick leave…" />
+      </div>
+
+      <div class="hint" style="margin:6px 0 4px;">One entry per date — marking the same date again updates it instead of duplicating.</div>
+      <div class="action-bar" style="margin-top:4px; margin-bottom:18px;">
+        <button class="btn btn-primary" id="saveEmployeeAttendanceBtn" style="width:auto;">Mark Attendance</button>
+        <button class="btn btn-ghost" id="downloadEmployeeAttendanceExcelBtn">Download Excel</button>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="history-table" id="employeeAttendanceTable">
+          <thead>
+            <tr><th>Date</th><th>Status</th><th>Note</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="employeeAttendanceBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="employeeAttendanceEmpty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <div>No attendance marked yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Employee Expense / Advance Modal ================= -->
+<div class="modal-overlay" id="employeeExpenseModal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3 id="employeeExpenseModalTitle">Expense / Advance</h3>
+      <button class="modal-close" data-close="employeeExpenseModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fin-summary-row">
+        <div class="fin-summary-card income">
+          <div class="fin-summary-label">Advance Given</div>
+          <div class="fin-summary-value" id="empExpSummaryAdvance">₹0.00</div>
+        </div>
+        <div class="fin-summary-card expense">
+          <div class="fin-summary-label">Other Expenses</div>
+          <div class="fin-summary-value" id="empExpSummaryOther">₹0.00</div>
+        </div>
+        <div class="fin-summary-card net">
+          <div class="fin-summary-label">Total</div>
+          <div class="fin-summary-value" id="empExpSummaryTotal">₹0.00</div>
+        </div>
+      </div>
+
+      <div class="field-row" style="margin-top:18px;">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="empExp_date" />
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <input type="text" id="empExp_category" list="employeeExpenseCategoryDatalist" placeholder="e.g. Advance" autocomplete="off" />
+          <datalist id="employeeExpenseCategoryDatalist">
+            <option value="Advance"></option>
+            <option value="Tea Expense"></option>
+            <option value="Petrol Charges"></option>
+            <option value="Food"></option>
+            <option value="Other"></option>
+          </datalist>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Description <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+          <input type="text" id="empExp_description" placeholder="Optional note" />
+        </div>
+        <div class="field">
+          <label>Amount (₹)</label>
+          <input type="number" id="empExp_amount" min="0" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+
+      <div class="action-bar" style="margin-top:4px; margin-bottom:18px;">
+        <button class="btn btn-primary" id="saveEmployeeExpenseBtn" style="width:auto;">Add Entry</button>
+        <button class="btn btn-ghost" id="downloadEmployeeExpenseExcelBtn">Download Excel</button>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="history-table" id="employeeExpenseTable">
+          <thead>
+            <tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="employeeExpenseBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="employeeExpenseEmpty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <div>No expenses recorded yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Client Documents Modal ================= -->
+<div class="modal-overlay" id="clientDocumentsModal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3 id="clientDocumentsModalTitle">Documents</h3>
+      <button class="modal-close" data-close="clientDocumentsModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Document Name</label>
+          <input type="text" id="cdoc_name" placeholder="e.g. Signed Agreement, PO Copy…" />
+        </div>
+        <div class="field">
+          <label>File (PDF, up to 8MB)</label>
+          <input type="file" id="cdoc_file" accept="application/pdf" />
+        </div>
+      </div>
+      <div class="action-bar" style="margin-top:4px;">
+        <button class="btn btn-primary" id="uploadClientDocumentBtn" style="width:auto;">Upload Document</button>
+      </div>
+      <div class="hint" id="cdocUploadHint" style="display:none; margin:8px 0 18px;"></div>
+
+      <div style="overflow-x:auto; margin-top:18px;">
+        <table class="history-table" id="clientDocumentsTable">
+          <thead>
+            <tr><th>Document Name</th><th>File</th><th>Uploaded</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="clientDocumentsBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="clientDocumentsEmpty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        <div>No documents uploaded yet for this client.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Document Preview Modal ================= -->
+<div class="modal-overlay" id="documentPreviewModal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3 id="documentPreviewModalTitle">Preview</h3>
+      <button class="modal-close" data-close="documentPreviewModal">×</button>
+    </div>
+    <div class="modal-body" style="background:#eee; padding:0;">
+      <iframe id="documentPreviewFrame" src="" style="width:100%; height:70vh; border:0; display:block;"></iframe>
+    </div>
+  </div>
+</div>
+
 <!-- Off-screen sheet used only for print/PDF (kept out of view, not display:none,
      so the @media print rule can reveal it — display:none elements never print). -->
 <div id="printArea">
@@ -921,13 +1322,17 @@
 <script src="js/vendor/html2pdf.bundle.min.js"></script>
 <script src="js/vendor/xlsx.full.min.js"></script>
 <script src="js/firebase-config.js"></script>
+<script src="js/appscript-config.js"></script>
 <script src="js/util.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/clients.js"></script>
+<script src="js/client-documents.js"></script>
 <script src="js/invoice.js"></script>
 <script src="js/boq.js"></script>
 <script src="js/idcards.js"></script>
 <script src="js/amc.js"></script>
+<script src="js/amc-finance.js"></script>
+<script src="js/employees.js"></script>
 <script src="js/history.js"></script>
 <script src="js/staff.js"></script>
 <script src="js/finance.js"></script>

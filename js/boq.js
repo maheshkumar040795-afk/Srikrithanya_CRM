@@ -66,23 +66,55 @@ function renderBoqItemsTable() {
   recalcBoqTotals();
 }
 
+// ---------------- GST type (IGST / CGST+SGST / Exempted) ----------------
+function updateBoqGstTypeUI() {
+  const gstType = document.getElementById("b_gstType").value;
+  document.getElementById("b_gstInputsCgstSgst").style.display = gstType === "CGST_SGST" ? "" : "none";
+  document.getElementById("b_gstInputsIgst").style.display = gstType === "IGST" ? "" : "none";
+  document.getElementById("b_igstRow").style.display = gstType === "IGST" ? "" : "none";
+  document.getElementById("b_cgstRow").style.display = gstType === "CGST_SGST" ? "" : "none";
+  document.getElementById("b_sgstRow").style.display = gstType === "CGST_SGST" ? "" : "none";
+}
+
+function wireBoqGstTypeControls() {
+  document.getElementById("b_gstType").addEventListener("change", () => { updateBoqGstTypeUI(); recalcBoqTotals(); });
+  document.getElementById("b_cgstPercent").addEventListener("input", recalcBoqTotals);
+  document.getElementById("b_sgstPercent").addEventListener("input", recalcBoqTotals);
+  document.getElementById("b_igstPercent").addEventListener("input", recalcBoqTotals);
+  updateBoqGstTypeUI();
+}
+
 function recalcBoqTotals() {
   const taxable = boqItemRows.reduce((sum, r) => sum + (Number(r.qty) || 0) * (Number(r.rate) || 0), 0);
-  const gstPercent = Number(document.getElementById("b_gstPercent").value) || 0;
-  const half = gstPercent / 2;
-  const cgst = taxable * half / 100;
-  const sgst = taxable * half / 100;
-  const total = taxable + cgst + sgst;
+  const gstType = document.getElementById("b_gstType").value;
+
+  let igstPercent = 0, cgstPercent = 0, sgstPercent = 0;
+  let igst = 0, cgst = 0, sgst = 0;
+
+  if (gstType === "IGST") {
+    igstPercent = Number(document.getElementById("b_igstPercent").value) || 0;
+    igst = taxable * igstPercent / 100;
+  } else if (gstType === "CGST_SGST") {
+    cgstPercent = Number(document.getElementById("b_cgstPercent").value) || 0;
+    sgstPercent = Number(document.getElementById("b_sgstPercent").value) || 0;
+    cgst = taxable * cgstPercent / 100;
+    sgst = taxable * sgstPercent / 100;
+  }
+  // EXEMPTED — igst/cgst/sgst all stay 0
+
+  const total = taxable + igst + cgst + sgst;
 
   document.getElementById("b_taxable").textContent = fmtMoney(taxable);
-  document.getElementById("b_cgstLabel").textContent = `CGST @ ${half}%`;
-  document.getElementById("b_sgstLabel").textContent = `SGST @ ${half}%`;
+  document.getElementById("b_igstLabel").textContent = `IGST @ ${igstPercent}%`;
+  document.getElementById("b_igst").textContent = fmtMoney(igst);
+  document.getElementById("b_cgstLabel").textContent = `CGST @ ${cgstPercent}%`;
   document.getElementById("b_cgst").textContent = fmtMoney(cgst);
+  document.getElementById("b_sgstLabel").textContent = `SGST @ ${sgstPercent}%`;
   document.getElementById("b_sgst").textContent = fmtMoney(sgst);
   document.getElementById("b_total").textContent = fmtMoney(total);
   document.getElementById("b_words").textContent = "Amount in words: " + numberToWordsIndian(total);
 
-  return { taxable, cgst, sgst, total, gstPercent };
+  return { taxable, gstType, igstPercent, igst, cgstPercent, cgst, sgstPercent, sgst, total };
 }
 
 // ---------------- BOQ numbering ----------------
@@ -110,7 +142,11 @@ function resetBoqForm(newNumber) {
   document.getElementById("b_clientAddress").value = "";
   document.getElementById("b_clientContact").value = "";
   document.getElementById("b_clientGstin").value = "";
-  document.getElementById("b_gstPercent").value = 18;
+  document.getElementById("b_gstType").value = "CGST_SGST";
+  document.getElementById("b_cgstPercent").value = 9;
+  document.getElementById("b_sgstPercent").value = 9;
+  document.getElementById("b_igstPercent").value = 18;
+  updateBoqGstTypeUI();
   addBoqItemRow();
 }
 
@@ -137,13 +173,17 @@ function collectBoqFormData() {
     clientAddress: document.getElementById("b_clientAddress").value,
     clientContact: document.getElementById("b_clientContact").value,
     clientGstin: document.getElementById("b_clientGstin").value,
-    gstPercent: totals.gstPercent,
     items: boqItemRows.map(r => ({
       description: r.description, unit: r.unit, qty: Number(r.qty) || 0, rate: Number(r.rate) || 0,
       amount: (Number(r.qty) || 0) * (Number(r.rate) || 0)
     })),
     taxableValue: totals.taxable,
+    gstType: totals.gstType,
+    igstPercent: totals.igstPercent,
+    igstAmount: totals.igst,
+    cgstPercent: totals.cgstPercent,
     cgstAmount: totals.cgst,
+    sgstPercent: totals.sgstPercent,
     sgstAmount: totals.sgst,
     netTotal: totals.total,
     netAmountWords: numberToWordsIndian(totals.total)
@@ -160,7 +200,18 @@ function loadBoqIntoForm(data, docId) {
   document.getElementById("b_clientAddress").value = data.clientAddress || "";
   document.getElementById("b_clientContact").value = data.clientContact || "";
   document.getElementById("b_clientGstin").value = data.clientGstin || "";
-  document.getElementById("b_gstPercent").value = data.gstPercent != null ? data.gstPercent : 18;
+  // Older BOQs saved before GST type existed used a single "GST %" split evenly into CGST + SGST.
+  if (!data.gstType && data.gstPercent != null) {
+    document.getElementById("b_gstType").value = "CGST_SGST";
+    document.getElementById("b_cgstPercent").value = data.gstPercent / 2;
+    document.getElementById("b_sgstPercent").value = data.gstPercent / 2;
+  } else {
+    document.getElementById("b_gstType").value = data.gstType || "CGST_SGST";
+    document.getElementById("b_cgstPercent").value = data.cgstPercent != null ? data.cgstPercent : 9;
+    document.getElementById("b_sgstPercent").value = data.sgstPercent != null ? data.sgstPercent : 9;
+  }
+  document.getElementById("b_igstPercent").value = data.igstPercent != null ? data.igstPercent : 18;
+  updateBoqGstTypeUI();
   boqItemRows = (data.items || []).map(it => Object.assign({ id: uid("boqitem") }, it));
   if (boqItemRows.length === 0) addBoqItemRow();
   else renderBoqItemsTable();
@@ -343,8 +394,25 @@ function wireBoqClientAutocomplete() {
 
 // ---------------- Rendering the printable BOQ sheet ----------------
 
+function renderBoqGstRowsHtml(data) {
+  // Older saved BOQs predate GST type and used a single "GST %" split evenly into CGST + SGST.
+  const gstType = data.gstType || (data.gstPercent != null ? "CGST_SGST" : "CGST_SGST");
+  const fmt = (n) => Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+  if (gstType === "IGST") {
+    return `<tr><td class="lbl-cell">IGST @ ${data.igstPercent != null ? data.igstPercent : 0}%</td><td class="val-cell">₹${fmt(data.igstAmount)}</td></tr>`;
+  }
+  if (gstType === "EXEMPTED") {
+    return `<tr><td class="lbl-cell">GST</td><td class="val-cell">Exempted (₹0.00)</td></tr>`;
+  }
+  const cgstPercent = data.cgstPercent != null ? data.cgstPercent : (data.gstPercent != null ? data.gstPercent / 2 : 9);
+  const sgstPercent = data.sgstPercent != null ? data.sgstPercent : (data.gstPercent != null ? data.gstPercent / 2 : 9);
+  return `
+    <tr><td class="lbl-cell">CGST @ ${cgstPercent}%</td><td class="val-cell">₹${fmt(data.cgstAmount)}</td></tr>
+    <tr><td class="lbl-cell">SGST @ ${sgstPercent}%</td><td class="val-cell">₹${fmt(data.sgstAmount)}</td></tr>
+  `;
+}
+
 function renderBoqHTML(data) {
-  const half = (data.gstPercent || 0) / 2;
   const itemsHtml = (data.items || []).map((it, idx) => `
     <tr>
       <td class="center">${idx + 1}</td>
@@ -405,8 +473,7 @@ function renderBoqHTML(data) {
 
     <table class="totals-print">
       <tr><td class="lbl-cell">Taxable Value</td><td class="val-cell">₹${Number(data.taxableValue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
-      <tr><td class="lbl-cell">CGST @ ${half}%</td><td class="val-cell">₹${Number(data.cgstAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
-      <tr><td class="lbl-cell">SGST @ ${half}%</td><td class="val-cell">₹${Number(data.sgstAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
+      ${renderBoqGstRowsHtml(data)}
       <tr><td class="lbl-cell" style="font-size:12.5px;">Total (Net Amount)</td><td class="val-cell" style="font-size:12.5px;">₹${Number(data.netTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
     </table>
     <div class="words-cell"><strong>Net Amount in Words:</strong> ${escapeHtml(data.netAmountWords)}</div>

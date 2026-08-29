@@ -59,6 +59,7 @@ function renderClientsTable(list) {
       <td>${escapeHtml(bank || "—")}</td>
       <td>
         <div class="row-actions">
+          <button class="icon-btn" data-action="documents" title="Documents">📄</button>
           <button class="icon-btn" data-action="edit" title="Edit">✎</button>
           <button class="icon-btn" data-action="delete" title="Delete">🗑</button>
         </div>
@@ -72,6 +73,10 @@ function renderClientsTable(list) {
 }
 
 function handleClientAction(action, client) {
+  if (action === "documents") {
+    openClientDocuments(client);
+    return;
+  }
   if (action === "edit") {
     loadClientIntoForm(client);
     return;

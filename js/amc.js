@@ -207,6 +207,7 @@ function renderAmcTable(list) {
       <td><span class="pill status-${s.status}">${amcStatusLabel(s)}</span></td>
       <td>
         <div class="row-actions">
+          <button class="icon-btn" data-action="finance" title="Finance">₹</button>
           <button class="icon-btn" data-action="edit" title="Edit">✎</button>
           <button class="icon-btn" data-action="delete" title="Delete">🗑</button>
         </div>
@@ -220,6 +221,10 @@ function renderAmcTable(list) {
 }
 
 function handleAmcAction(action, entry) {
+  if (action === "finance") {
+    openAmcFinance(entry);
+    return;
+  }
   if (action === "edit") {
     loadAmcIntoForm(entry);
     return;

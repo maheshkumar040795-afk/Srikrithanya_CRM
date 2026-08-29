@@ -338,8 +338,14 @@ select:focus-visible, textarea:focus-visible {
   flex: 1; padding: 10px; border-radius: var(--radius-sm); border: 1.5px solid var(--line-strong);
   background: var(--white); font-size: 0.88rem; font-weight: 600; color: #6f6362;
 }
+/* Default active style for any .fin-type-tab (Employee type, AMC finance type, etc).
+   Specific ids below override this with green/red where an income/expense-style
+   meaning applies. */
+.fin-type-tab.active { background: var(--red-gradient); border-color: transparent; color: var(--white); }
 .fin-type-tab#finTypeIncomeBtn.active { background: #eef2ef; border-color: var(--success); color: var(--success); }
 .fin-type-tab#finTypeExpenseBtn.active { background: #fdecea; border-color: var(--danger); color: var(--danger); }
+.fin-type-tab#amcFinTypeAmountBtn.active { background: #eef2ef; border-color: var(--success); color: var(--success); }
+.fin-type-tab#amcFinTypeExpenseBtn.active { background: #fdecea; border-color: var(--danger); color: var(--danger); }
 
 .fin-filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
 .fin-filter-row input[type="text"] { flex: 1 1 200px; }

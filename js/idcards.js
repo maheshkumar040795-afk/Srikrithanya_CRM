@@ -83,20 +83,35 @@ function updateCardPreview() {
   const name = document.getElementById("i_name").value.trim();
   const contact = document.getElementById("i_contact").value.trim();
   const code = document.getElementById("i_code").value.trim();
+  const role = document.getElementById("i_role").value.trim();
   const blood = document.getElementById("i_blood").value;
 
   document.getElementById("idc_name").textContent = name || "Employee Name";
   document.getElementById("idc_code").textContent = code || "—";
   document.getElementById("idc_contact").textContent = contact || "—";
+  document.getElementById("idc_role").textContent = role || "—";
+  document.getElementById("idc_roleRow").style.display = role ? "block" : "none";
   document.getElementById("idc_blood").textContent = blood || "—";
   document.getElementById("idc_bloodRow").style.display = blood ? "block" : "none";
 }
 
 function wireLivePreview() {
-  ["i_name", "i_contact", "i_code"].forEach(id => {
+  ["i_name", "i_contact", "i_code", "i_role"].forEach(id => {
     document.getElementById(id).addEventListener("input", updateCardPreview);
   });
   document.getElementById("i_blood").addEventListener("change", updateCardPreview);
+}
+
+// ---------------- Role suggestions ----------------
+// Base suggestions always offered, plus any custom role a user has typed and saved
+// before — so a newly-typed role becomes a future suggestion too.
+const ID_CARD_BASE_ROLES = ["Site Engineer", "Fitter", "Welder", "Helper", "Contract Labour"];
+
+function populateIdCardRoleDatalist() {
+  const used = (idCardsCache || []).map(c => (c.role || "").trim()).filter(Boolean);
+  const roles = Array.from(new Set([...ID_CARD_BASE_ROLES, ...used]));
+  document.getElementById("idCardRoleDatalist").innerHTML =
+    roles.map(r => `<option value="${escapeHtml(r)}"></option>`).join("");
 }
 
 // ---------------- Form <-> record ----------------
@@ -104,6 +119,7 @@ function applyRecordToPreview(record) {
   document.getElementById("i_name").value = record.name || "";
   document.getElementById("i_contact").value = record.contact || "";
   document.getElementById("i_code").value = record.code || "";
+  document.getElementById("i_role").value = record.role || "";
   document.getElementById("i_blood").value = record.blood || "";
   setCardPhoto(record.photoDataUrl || null);
   updateCardPreview();
@@ -120,7 +136,7 @@ function loadIdCardIntoForm(record) {
 
 function resetIdCardForm() {
   editingIdCardId = null;
-  ["i_name", "i_contact", "i_code"].forEach(id => { document.getElementById(id).value = ""; });
+  ["i_name", "i_contact", "i_code", "i_role"].forEach(id => { document.getElementById(id).value = ""; });
   document.getElementById("i_blood").value = "";
   setCardPhoto(null);
   updateCardPreview();
@@ -140,13 +156,14 @@ async function saveIdCard() {
   const name = document.getElementById("i_name").value.trim();
   const contact = document.getElementById("i_contact").value.trim();
   const code = document.getElementById("i_code").value.trim();
+  const role = document.getElementById("i_role").value.trim();
   const blood = document.getElementById("i_blood").value;
 
   if (!name) { showToast("Employee name is required.", "error"); return; }
   if (!contact) { showToast("Employee contact is required.", "error"); return; }
   if (!code) { showToast("Employee code is required.", "error"); return; }
 
-  const data = { name, contact, code, blood, photoDataUrl: currentPhotoDataUrl || null };
+  const data = { name, contact, code, role, blood, photoDataUrl: currentPhotoDataUrl || null };
   const wasEditing = !!editingIdCardId;
   const btn = document.getElementById("saveIdCardBtn");
   const original = btn.textContent;
@@ -199,13 +216,18 @@ async function loadIdCardsList() {
     return;
   }
   empty.querySelector("div").textContent = "No ID cards generated yet. Create your first one above.";
+  populateIdCardRoleDatalist();
   const search = document.getElementById("idCardSearch");
   renderIdCardsTable(filterIdCards(search ? search.value.trim().toLowerCase() : ""));
 }
 
 function filterIdCards(q) {
   if (!q) return idCardsCache;
-  return idCardsCache.filter(c => (c.name || "").toLowerCase().includes(q) || (c.code || "").toLowerCase().includes(q));
+  return idCardsCache.filter(c =>
+    (c.name || "").toLowerCase().includes(q) ||
+    (c.code || "").toLowerCase().includes(q) ||
+    (c.role || "").toLowerCase().includes(q)
+  );
 }
 
 function renderIdCardsTable(list) {
@@ -223,6 +245,7 @@ function renderIdCardsTable(list) {
       <td>${thumb}</td>
       <td><strong>${escapeHtml(c.name)}</strong></td>
       <td>${escapeHtml(c.code || "—")}</td>
+      <td>${escapeHtml(c.role || "—")}</td>
       <td>${escapeHtml(c.contact || "—")}</td>
       <td>${escapeHtml(c.blood || "—")}</td>
       <td>
@@ -278,6 +301,8 @@ function buildExportCardHTML() {
   const name = document.getElementById("idc_name").textContent;
   const code = document.getElementById("idc_code").textContent;
   const contact = document.getElementById("idc_contact").textContent;
+  const role = document.getElementById("idc_role").textContent;
+  const roleRowVisible = document.getElementById("idc_roleRow").style.display !== "none";
   const blood = document.getElementById("idc_blood").textContent;
   const bloodRowVisible = document.getElementById("idc_bloodRow").style.display !== "none";
   const photoImg = document.querySelector("#idCardPhotoFrame img");
@@ -296,6 +321,7 @@ function buildExportCardHTML() {
     </div>
     <div class="id-card-body">
       <div class="id-card-name">${escapeHtml(name)}</div>
+      <div class="id-card-row" style="display:${roleRowVisible ? "block" : "none"};"><span class="lbl">Role</span><span class="val">${escapeHtml(role)}</span></div>
       <div class="id-card-row"><span class="lbl">Emp. Code</span><span class="val">${escapeHtml(code)}</span></div>
       <div class="id-card-row"><span class="lbl">Contact</span><span class="val">${escapeHtml(contact)}</span></div>
       <div class="id-card-row" style="display:${bloodRowVisible ? "block" : "none"};"><span class="lbl">Blood Group</span><span class="val">${escapeHtml(blood)}</span></div>

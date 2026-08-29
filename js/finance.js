@@ -31,6 +31,8 @@ function setFinanceFormType(type) {
   document.getElementById("finTypeIncomeBtn").classList.toggle("active", type === "income");
   document.getElementById("finTypeExpenseBtn").classList.toggle("active", type === "expense");
   document.getElementById("finPartyLabel").textContent = type === "income" ? "Received From" : "Paid To";
+  document.getElementById("finNotesLabel").textContent = type === "income" ? "Income Description" : "Expense Description";
+  document.getElementById("fin_notes").placeholder = type === "income" ? "What's this income for?" : "What's this expense for?";
   populateFinanceCategorySelect(type);
 }
 
@@ -134,6 +136,7 @@ function renderFinanceTable(list) {
       <td><span class="pill ${isIncome ? "income" : "expense"}">${isIncome ? "Income" : "Expense"}</span></td>
       <td>${escapeHtml(e.category || "—")}</td>
       <td>${escapeHtml(e.party || "—")}</td>
+      <td>${escapeHtml(e.notes || "—")}</td>
       <td>${escapeHtml(e.paymentMode || "—")}</td>
       <td class="${isIncome ? "amt-income" : "amt-expense"}">${isIncome ? "+" : "−"} ${fmtMoney(e.amount)}</td>
       <td>
@@ -304,7 +307,7 @@ function renderFinanceStatementHTML(list, summary) {
     <table class="items-print" style="margin-top:14px;">
       <thead>
         <tr>
-          <th>Date</th><th>Type</th><th>Category</th><th>Party</th><th>Mode</th><th>Notes</th><th>Amount (₹)</th>
+          <th>Date</th><th>Type</th><th>Category</th><th>Party</th><th>Mode</th><th>Description</th><th>Amount (₹)</th>
         </tr>
       </thead>
       <tbody>${rows || `<tr><td colspan="7" class="center">No entries in this range.</td></tr>`}</tbody>
@@ -364,7 +367,7 @@ function downloadFinanceExcel() {
   }
   const summary = computeFinanceSummary(list);
 
-  const rows = [["Date", "Type", "Category", "Party", "Payment Mode", "Notes", "Amount (₹)"]];
+  const rows = [["Date", "Type", "Category", "Party", "Payment Mode", "Description", "Amount (₹)"]];
   list.forEach(e => {
     rows.push([
       e.date || "", e.type === "income" ? "Income" : "Expense", e.category || "",

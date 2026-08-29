@@ -83,19 +83,56 @@ function renderItemsTable() {
   recalcTotals();
 }
 
+// ---------------- GST type (IGST / CGST+SGST / Exempted) ----------------
+// Shows/hides the right input boxes and totals rows for the selected GST type.
+function updateInvoiceGstTypeUI() {
+  const gstType = document.getElementById("f_gstType").value;
+  document.getElementById("f_gstInputsCgstSgst").style.display = gstType === "CGST_SGST" ? "" : "none";
+  document.getElementById("f_gstInputsIgst").style.display = gstType === "IGST" ? "" : "none";
+  document.getElementById("t_igstRow").style.display = gstType === "IGST" ? "" : "none";
+  document.getElementById("t_cgstRow").style.display = gstType === "CGST_SGST" ? "" : "none";
+  document.getElementById("t_sgstRow").style.display = gstType === "CGST_SGST" ? "" : "none";
+}
+
+function wireInvoiceGstTypeControls() {
+  document.getElementById("f_gstType").addEventListener("change", () => { updateInvoiceGstTypeUI(); recalcTotals(); });
+  document.getElementById("f_cgstPercent").addEventListener("input", recalcTotals);
+  document.getElementById("f_sgstPercent").addEventListener("input", recalcTotals);
+  document.getElementById("f_igstPercent").addEventListener("input", recalcTotals);
+  updateInvoiceGstTypeUI();
+}
+
 function recalcTotals() {
   const taxable = itemRows.reduce((sum, r) => sum + (Number(r.qty) || 0) * (Number(r.rate) || 0), 0);
-  const cgst = taxable * 0.09;
-  const sgst = taxable * 0.09;
-  const total = taxable + cgst + sgst;
+  const gstType = document.getElementById("f_gstType").value;
+
+  let igstPercent = 0, cgstPercent = 0, sgstPercent = 0;
+  let igst = 0, cgst = 0, sgst = 0;
+
+  if (gstType === "IGST") {
+    igstPercent = Number(document.getElementById("f_igstPercent").value) || 0;
+    igst = taxable * igstPercent / 100;
+  } else if (gstType === "CGST_SGST") {
+    cgstPercent = Number(document.getElementById("f_cgstPercent").value) || 0;
+    sgstPercent = Number(document.getElementById("f_sgstPercent").value) || 0;
+    cgst = taxable * cgstPercent / 100;
+    sgst = taxable * sgstPercent / 100;
+  }
+  // EXEMPTED — igst/cgst/sgst all stay 0
+
+  const total = taxable + igst + cgst + sgst;
 
   document.getElementById("t_taxable").textContent = fmtMoney(taxable);
+  document.getElementById("t_igstLabel").textContent = `IGST @ ${igstPercent}%`;
+  document.getElementById("t_igst").textContent = fmtMoney(igst);
+  document.getElementById("t_cgstLabel").textContent = `CGST @ ${cgstPercent}%`;
   document.getElementById("t_cgst").textContent = fmtMoney(cgst);
+  document.getElementById("t_sgstLabel").textContent = `SGST @ ${sgstPercent}%`;
   document.getElementById("t_sgst").textContent = fmtMoney(sgst);
   document.getElementById("t_total").textContent = fmtMoney(total);
   document.getElementById("t_words").textContent = "Amount in words: " + numberToWordsIndian(total);
 
-  return { taxable, cgst, sgst, total };
+  return { taxable, gstType, igstPercent, igst, cgstPercent, cgst, sgstPercent, sgst, total };
 }
 
 // ---------------- Invoice numbering ----------------
@@ -128,6 +165,11 @@ function resetInvoiceForm(newNumber) {
   document.getElementById("f_buyerGstin").value = "";
   document.getElementById("f_buyerEmail").value = "";
   document.getElementById("f_buyerPhone").value = "";
+  document.getElementById("f_gstType").value = "CGST_SGST";
+  document.getElementById("f_cgstPercent").value = 9;
+  document.getElementById("f_sgstPercent").value = 9;
+  document.getElementById("f_igstPercent").value = 18;
+  updateInvoiceGstTypeUI();
   addItemRow();
 }
 
@@ -168,7 +210,12 @@ function collectFormData() {
       amount: (Number(r.qty) || 0) * (Number(r.rate) || 0)
     })),
     taxableValue: totals.taxable,
+    gstType: totals.gstType,
+    igstPercent: totals.igstPercent,
+    igstAmount: totals.igst,
+    cgstPercent: totals.cgstPercent,
     cgstAmount: totals.cgst,
+    sgstPercent: totals.sgstPercent,
     sgstAmount: totals.sgst,
     netTotal: totals.total,
     netAmountWords: numberToWordsIndian(totals.total)
@@ -192,6 +239,12 @@ function loadInvoiceIntoForm(data, docId) {
   document.getElementById("f_buyerGstin").value = data.buyerGstin || "";
   document.getElementById("f_buyerEmail").value = data.buyerEmail || "";
   document.getElementById("f_buyerPhone").value = data.buyerPhone || "";
+  // Older invoices saved before GST type existed always used a fixed 9% + 9% CGST/SGST split.
+  document.getElementById("f_gstType").value = data.gstType || "CGST_SGST";
+  document.getElementById("f_cgstPercent").value = data.cgstPercent != null ? data.cgstPercent : 9;
+  document.getElementById("f_sgstPercent").value = data.sgstPercent != null ? data.sgstPercent : 9;
+  document.getElementById("f_igstPercent").value = data.igstPercent != null ? data.igstPercent : 18;
+  updateInvoiceGstTypeUI();
   itemRows = (data.items || []).map(it => Object.assign({ id: uid("item") }, it));
   if (itemRows.length === 0) addItemRow();
   else renderItemsTable();
@@ -234,6 +287,23 @@ async function saveInvoice() {
 }
 
 // ---------------- Rendering the printable invoice sheet ----------------
+function renderInvoiceGstRowsHtml(data) {
+  const gstType = data.gstType || "CGST_SGST"; // older saved invoices predate GST type and used a fixed 9%+9% split
+  const fmt = (n) => Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+  if (gstType === "IGST") {
+    return `<tr><td class="lbl-cell">IGST Amount @ ${data.igstPercent != null ? data.igstPercent : 0}%</td><td class="val-cell">₹${fmt(data.igstAmount)}</td></tr>`;
+  }
+  if (gstType === "EXEMPTED") {
+    return `<tr><td class="lbl-cell">GST</td><td class="val-cell">Exempted (₹0.00)</td></tr>`;
+  }
+  const cgstPercent = data.cgstPercent != null ? data.cgstPercent : 9;
+  const sgstPercent = data.sgstPercent != null ? data.sgstPercent : 9;
+  return `
+    <tr><td class="lbl-cell">CGST Amount @ ${cgstPercent}%</td><td class="val-cell">₹${fmt(data.cgstAmount)}</td></tr>
+    <tr><td class="lbl-cell">SGST Amount @ ${sgstPercent}%</td><td class="val-cell">₹${fmt(data.sgstAmount)}</td></tr>
+  `;
+}
+
 function renderInvoiceHTML(data) {
   const itemsHtml = (data.items || []).map((it, idx) => `
     <tr>
@@ -311,8 +381,7 @@ function renderInvoiceHTML(data) {
 
     <table class="totals-print">
       <tr><td class="lbl-cell">Taxable Value</td><td class="val-cell">₹${Number(data.taxableValue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
-      <tr><td class="lbl-cell">CGST Amount @ 9%</td><td class="val-cell">₹${Number(data.cgstAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
-      <tr><td class="lbl-cell">SGST Amount @ 9%</td><td class="val-cell">₹${Number(data.sgstAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
+      ${renderInvoiceGstRowsHtml(data)}
       <tr><td class="lbl-cell" style="font-size:12.5px;">Total (Net Amount)</td><td class="val-cell" style="font-size:12.5px;">₹${Number(data.netTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
     </table>
     <div class="words-cell"><strong>Net Amount in Words:</strong> ${escapeHtml(data.netAmountWords)}</div>

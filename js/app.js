@@ -3,7 +3,7 @@
 // ============================================================
 
 function switchView(viewId) {
-  ["invoiceView", "historyView", "clientsView", "idCardsView", "boqView", "amcView", "financeView", "staffView"].forEach(id => {
+  ["invoiceView", "historyView", "clientsView", "idCardsView", "boqView", "amcView", "employeesView", "financeView", "staffView"].forEach(id => {
     document.getElementById(id).style.display = (id === viewId) ? "block" : "none";
   });
   document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
@@ -16,6 +16,7 @@ function switchView(viewId) {
     idCardsView: ["ID Cards", "Generate and manage employee ID cards"],
     boqView: ["BOQ", "Bill of quantities / quotations, with GST and PDF export"],
     amcView: ["AMC", "Annual maintenance contracts, by renewal cycle"],
+    employeesView: ["Employee Management", "Permanent & temporary staff, attendance and expenses"],
     financeView: ["Finance", "Track income, expenses, and company cash flow"],
     staffView: ["Staff Access", "Manage who can sign in to this CRM"]
   };
@@ -29,6 +30,7 @@ function switchView(viewId) {
   if (viewId === "idCardsView") loadIdCardsList();
   if (viewId === "boqView") loadBoqList();
   if (viewId === "amcView") loadAmcEntries();
+  if (viewId === "employeesView") loadEmployeesList();
   if (viewId === "financeView") loadFinanceEntries();
   if (viewId === "staffView") loadStaffList();
 }
@@ -83,6 +85,7 @@ function closeSidebar() {
   document.getElementById("previewBtn").addEventListener("click", openPreview);
   document.getElementById("printBtn").addEventListener("click", printInvoice);
   wireBuyerAutocomplete();
+  wireInvoiceGstTypeControls();
 
   // Preview modal
   document.getElementById("downloadPdfBtn").addEventListener("click", () => downloadInvoicePdf());
@@ -103,6 +106,7 @@ function closeSidebar() {
   document.getElementById("saveClientBtn").addEventListener("click", saveClient);
   document.getElementById("cancelClientEditBtn").addEventListener("click", resetClientForm);
   wireClientSearch();
+  document.getElementById("uploadClientDocumentBtn").addEventListener("click", uploadClientDocument);
   loadClientsCache().then(populateAmcClientDatalist).catch(() => {}); // warms the cache early so the invoice/AMC autocompletes are instant
 
   // ID Cards
@@ -122,6 +126,20 @@ function closeSidebar() {
   wireAmcSearch();
   wireAmcNotifyBanner();
   checkAmcNotificationsOnBoot(); // shows the red "due/overdue" banner on login, if any
+  document.getElementById("saveAmcFinanceBtn").addEventListener("click", saveAmcFinanceEntry);
+  wireAmcFinanceTypeTabs();
+
+  // Employee Management
+  document.getElementById("saveEmployeeBtn").addEventListener("click", saveEmployee);
+  document.getElementById("cancelEmployeeEditBtn").addEventListener("click", resetEmployeeForm);
+  wireEmployeeFormTypeTabs();
+  wireEmployeeListSubtabs();
+  wireEmployeeSearch();
+  document.getElementById("saveEmployeeAttendanceBtn").addEventListener("click", saveEmployeeAttendanceEntry);
+  document.getElementById("saveEmployeeExpenseBtn").addEventListener("click", saveEmployeeExpenseEntry);
+  document.getElementById("downloadEmployeeAttendanceExcelBtn").addEventListener("click", downloadEmployeeAttendanceExcel);
+  document.getElementById("downloadEmployeeExpenseExcelBtn").addEventListener("click", downloadEmployeeExpenseExcel);
+  resetEmployeeForm();
 
   // BOQ
   document.getElementById("addBoqRowBtn").addEventListener("click", () => addBoqItemRow());
@@ -130,7 +148,7 @@ function closeSidebar() {
   document.getElementById("downloadBoqPdfFromPreviewBtn").addEventListener("click", () => downloadBoqPdf());
   document.getElementById("newBoqBtn").addEventListener("click", startNewBoq);
   document.getElementById("downloadBoqPdfBtn").addEventListener("click", () => downloadBoqPdf());
-  document.getElementById("b_gstPercent").addEventListener("input", recalcBoqTotals);
+  wireBoqGstTypeControls();
   wireBoqClientAutocomplete();
   wireBoqSearch();
   startNewBoq();

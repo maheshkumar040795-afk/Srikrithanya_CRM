@@ -66,6 +66,21 @@ service cloud.firestore {
     match /financeEntries/{entryId} {
       allow read, write: if isAdmin();
     }
+    match /amcFinanceEntries/{entryId} {
+      allow read, write: if isSignedIn();
+    }
+    match /employees/{employeeId} {
+      allow read, write: if isSignedIn();
+    }
+    match /employeeAttendance/{entryId} {
+      allow read, write: if isSignedIn();
+    }
+    match /employeeExpenses/{entryId} {
+      allow read, write: if isSignedIn();
+    }
+    match /clientDocuments/{docId} {
+      allow read, write: if isSignedIn();
+    }
   }
 }
 ```
@@ -102,6 +117,56 @@ python3 -m http.server 8080
    GitHub Pages domain (e.g. `<your-github-username>.github.io`), otherwise sign-in will
    be blocked from that domain.
 
+## 6. Client Documents via Google Drive (optional)
+
+The **Documents** icon on each client (Clients tab) lets you upload a PDF per client —
+signed agreements, PO copies, etc. Files aren't stored in Firestore (too big); instead
+they're uploaded to a Google Drive folder through a small Apps Script "Web App" you
+deploy once, for free, on the same Google account as anything else. Skip this section
+if you don't need document uploads yet — the rest of the CRM works fine without it, and
+the Documents modal will just tell you it isn't set up.
+
+1. **Create the Drive folder.** Go to **drive.google.com** → **New → Folder** → name it
+   e.g. `Srikrithanya CRM Documents` → open it → copy the ID from the address bar:
+   `https://drive.google.com/drive/folders/`**`THIS_PART_IS_THE_FOLDER_ID`**.
+2. **Create the Apps Script project.** Go to **script.google.com** → **New project**.
+   Delete the default `Code.gs` contents and paste in the contents of
+   **`apps-script/Code.gs`** from this project.
+3. **Fill in the two placeholders** near the top of the script you just pasted:
+   - `ROOT_FOLDER_ID` → the folder ID from step 1.
+   - `SHARED_SECRET` → make up a long random string (e.g. generate one at
+     [randomkeygen.com](https://randomkeygen.com)). This is a simple password that stops
+     anyone who finds your Web App URL from uploading or deleting files without it.
+   Save the project (e.g. name it "Srikrithanya CRM Documents").
+4. **Deploy it as a Web App.** Top-right **Deploy → New deployment** → click the gear
+   next to "Select type" → **Web app** → fill in:
+   - Execute as: **Me** (your Google account)
+   - Who has access: **Anyone**
+   → **Deploy**. The first time, Google will ask you to **authorize** the script — click
+   through the "unverified app" warning (it's your own script) and allow Drive access.
+5. **Copy the Web app URL** shown after deploying (ends in `/exec`).
+6. **Paste both values into the CRM.** Open **`js/appscript-config.js`** in this project
+   and replace the two `REPLACE_ME` placeholders:
+   ```js
+   const APPSCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/XXXXXXXX/exec";
+   const APPSCRIPT_SHARED_SECRET = "the-same-long-random-string-from-step-3";
+   ```
+7. **Add the Firestore rule** for the new `clientDocuments` collection — it's already
+   included in the rules block in step 2 above if you're setting this up fresh; if you
+   copied your rules before this section existed, add:
+   ```
+   match /clientDocuments/{docId} {
+     allow read, write: if isSignedIn();
+   }
+   ```
+
+That's it — every client's **📄 Documents** icon now lets you name a document, upload a
+PDF (up to 8MB), and **Preview** (opens right in the CRM), **Download**, or **Delete** it.
+Each client gets its own subfolder inside your Drive folder, created automatically on
+first upload. If you ever redeploy the Apps Script with code changes, choose **Deploy →
+Manage deployments → edit (pencil) → New version** rather than creating a brand-new
+deployment, so the Web App URL already saved in `js/appscript-config.js` keeps working.
+
 ---
 
 ## How things work
@@ -127,7 +192,9 @@ python3 -m http.server 8080
   IFSC) and it's saved for reuse. In the invoice builder, typing into **Buyer Name** or
   **Buyer Address** suggests matching onboarded clients — picking one fills in Name,
   Address, Email and Phone automatically. If a client isn't onboarded yet, just type
-  their details in manually as before; nothing is required to be pre-saved.
+  their details in manually as before; nothing is required to be pre-saved. Each client
+  also has a **📄 Documents** icon to upload/preview/download/delete PDFs for that
+  client, stored in Google Drive via an Apps Script Web App — see section 6 above.
 - **ID Cards** — upload an employee photo (auto-cropped/compressed to a passport-photo
   ratio) plus Name, Contact, Employee Code, and an optional Blood Group, and it renders
   a live preview of a print-ready badge with the company logo and the Director's
