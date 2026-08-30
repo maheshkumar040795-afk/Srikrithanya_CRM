@@ -295,6 +295,7 @@ function renderBoqList(list) {
       <td>${escapeHtml(b.clientName || "—")}</td>
       <td>${fmtDate(b.boqDate)}</td>
       <td>${fmtMoney(b.netTotal)}</td>
+      <td>${escapeHtml(b.createdBy || "—")}</td>
       <td>
         <div class="row-actions">
           <button class="icon-btn" data-action="edit" title="Edit">✎</button>

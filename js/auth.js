@@ -62,6 +62,7 @@ function friendlyAuthError(err) {
 
     try {
       await auth.signInWithEmailAndPassword(email, password);
+      sessionStorage.setItem("justLoggedIn", "1"); // triggers the one-time welcome popup on the dashboard
       window.location.href = "dashboard.html";
     } catch (err) {
       loginError.textContent = friendlyAuthError(err);

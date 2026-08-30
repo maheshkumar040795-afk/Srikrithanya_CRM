@@ -221,6 +221,7 @@ function renderAmcTable(list) {
       <td>${e.nextCycleDate ? fmtDate(e.nextCycleDate) : "—"}</td>
       <td>${fmtDate(s.dueDate)} <span style="color:#8a7d7c; font-size:0.78rem;">(${escapeHtml(s.label)})</span></td>
       <td><span class="pill status-${s.status}">${amcStatusLabel(s)}</span></td>
+      <td>${escapeHtml(e.createdBy || "—")}</td>
       <td>
         <div class="row-actions">
           <button class="icon-btn" data-action="finance" title="Finance">₹</button>

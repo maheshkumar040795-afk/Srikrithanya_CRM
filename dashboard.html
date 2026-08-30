@@ -56,6 +56,14 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6l1 3h3a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3l1-3z"/><path d="M8 12h8M8 16h5"/></svg>
       BOQ
     </button>
+    <button class="nav-item" data-view="challanView">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3H5a2 2 0 0 0-2 2v16l4-2 3 2 3-2 3 2 4-2V8z"/><path d="M14 3v5h5"/><path d="M8 13h6M8 17h4"/></svg>
+      Delivery Challan
+    </button>
+    <button class="nav-item" data-view="voucherView">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M3 10a2 2 0 0 0 2-2M21 10a2 2 0 0 1-2-2M3 14a2 2 0 0 1 2 2M21 14a2 2 0 0 0-2 2"/></svg>
+      Voucher
+    </button>
     <button class="nav-item" data-view="amcView">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg>
       AMC
@@ -658,6 +666,7 @@
                   <th>Client</th>
                   <th>Date</th>
                   <th>Total</th>
+                  <th>Created By</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -667,6 +676,321 @@
           <div class="empty-state" id="boqListEmpty" style="display:none;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h6l1 3h3a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3l1-3z"/></svg>
             <div>No BOQs saved yet.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ DELIVERY CHALLAN ============ -->
+      <section id="challanView" style="display:none;">
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Challan details</h3>
+              <div class="desc">Challan number is auto-generated. Pick a Challan Type — Job Work challans typically stay GST-exempt.</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Challan No.</label>
+              <input type="text" id="dc_challanNo" readonly />
+            </div>
+            <div class="field">
+              <label>Challan Type</label>
+              <select id="dc_challanType">
+                <option>Job Work</option>
+                <option>Sales / Delivery</option>
+                <option>Sample</option>
+                <option>Returnable</option>
+                <option>Others</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Order Date</label>
+              <input type="date" id="dc_orderDate" />
+            </div>
+            <div class="field">
+              <label>Challan Date</label>
+              <input type="date" id="dc_challanDate" />
+            </div>
+            <div class="field">
+              <label>Dispatch Date</label>
+              <input type="date" id="dc_dispatchDate" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Bill To / Ship To</h3>
+              <div class="desc">Client or site this delivery is going to</div>
+            </div>
+          </div>
+          <div class="field autocomplete-field">
+            <label>Client Name</label>
+            <input type="text" id="dc_clientName" placeholder="Client / site name" autocomplete="off" />
+            <div class="autocomplete-list" id="challanClientNameSuggestions"></div>
+            <div class="hint">Start typing to pick an onboarded client, or enter new details manually.</div>
+          </div>
+          <div class="field">
+            <label>Address</label>
+            <textarea id="dc_clientAddress" rows="2" placeholder="Site / delivery address"></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Phone</label>
+              <input type="text" id="dc_clientPhone" />
+            </div>
+            <div class="field">
+              <label>GSTIN</label>
+              <input type="text" id="dc_clientGstin" placeholder="Optional" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Reference Details</h3>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Ref #</label>
+              <input type="text" id="dc_refNo" />
+            </div>
+            <div class="field">
+              <label>Order No</label>
+              <input type="text" id="dc_orderNo" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Place of Supply</label>
+              <input type="text" id="dc_placeOfSupply" value="Tamil Nadu (33)" />
+            </div>
+            <div class="field">
+              <label>Transport / Vehicle No</label>
+              <input type="text" id="dc_transport" placeholder="e.g. TN-01-AB-1234" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Items</h3>
+              <div class="desc">Amount = Qty × Rate. Set the GST Type below — Job Work / Exempted challans show ₹0 GST.</div>
+            </div>
+          </div>
+
+          <div class="items-table-wrap">
+            <table class="items-table" id="challanItemsTable">
+              <thead>
+                <tr>
+                  <th class="col-sl">#</th>
+                  <th>Item Description</th>
+                  <th class="col-hsn">HSN/SAC</th>
+                  <th class="col-unit">Unit</th>
+                  <th class="col-qty">Qty</th>
+                  <th class="col-rate">Rate (₹)</th>
+                  <th class="col-amt">Amount (₹)</th>
+                  <th style="width:34px;"></th>
+                </tr>
+              </thead>
+              <tbody id="challanItemsBody"></tbody>
+            </table>
+          </div>
+          <button class="add-row-btn" id="addChallanRowBtn" type="button">+ Add item</button>
+
+          <div class="field" style="max-width:220px; margin-top:14px;">
+            <label>GST Type</label>
+            <select id="dc_gstType">
+              <option value="EXEMPTED">Exempted / Job Work (No Tax)</option>
+              <option value="CGST_SGST">CGST / SGST</option>
+              <option value="IGST">IGST</option>
+            </select>
+          </div>
+
+          <div class="field-row" id="dc_gstInputsCgstSgst" style="display:none;">
+            <div class="field">
+              <label>CGST %</label>
+              <input type="number" id="dc_cgstPercent" min="0" step="0.01" value="9" />
+            </div>
+            <div class="field">
+              <label>SGST %</label>
+              <input type="number" id="dc_sgstPercent" min="0" step="0.01" value="9" />
+            </div>
+          </div>
+          <div class="field" id="dc_gstInputsIgst" style="max-width:160px; display:none;">
+            <label>IGST %</label>
+            <input type="number" id="dc_igstPercent" min="0" step="0.01" value="18" />
+          </div>
+
+          <div class="field">
+            <label>Notes <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+            <textarea id="dc_notes" rows="2" placeholder="e.g. Goods dispatched as per work order. Received in good condition."></textarea>
+          </div>
+
+          <div class="totals-box">
+            <table>
+              <tr><td>Sub Total</td><td id="dc_taxable">₹0.00</td></tr>
+              <tr id="dc_igstRow" style="display:none;"><td id="dc_igstLabel">IGST @ 18%</td><td id="dc_igst">₹0.00</td></tr>
+              <tr id="dc_cgstRow" style="display:none;"><td id="dc_cgstLabel">CGST @ 9%</td><td id="dc_cgst">₹0.00</td></tr>
+              <tr id="dc_sgstRow" style="display:none;"><td id="dc_sgstLabel">SGST @ 9%</td><td id="dc_sgst">₹0.00</td></tr>
+              <tr><td>Rounded Off</td><td id="dc_roundOff">₹0.00</td></tr>
+              <tr class="grand-total"><td>Grand Total</td><td id="dc_total">₹0.00</td></tr>
+            </table>
+          </div>
+          <div class="words-line" id="dc_words">Amount in words: —</div>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn btn-primary" id="saveChallanBtn" style="width:auto;">Save Challan</button>
+          <button class="btn btn-ghost" id="previewChallanBtn">Preview</button>
+          <button class="btn btn-ghost" id="newChallanBtn">New Challan</button>
+          <button class="btn btn-ghost" id="downloadChallanPdfBtn">⬇ Download PDF</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Saved Delivery Challans</h3>
+              <div class="desc">Previously created challans — edit, re-download, or delete.</div>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="challanSearch" placeholder="Search by challan no., client, or order no…" />
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="history-table" id="challanListTable">
+              <thead>
+                <tr>
+                  <th>Challan No.</th>
+                  <th>Type</th>
+                  <th>Client</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Created By</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="challanListBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="challanListEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 3H5a2 2 0 0 0-2 2v16l4-2 3 2 3-2 3 2 4-2V8z"/><path d="M14 3v5h5"/></svg>
+            <div>No delivery challans saved yet.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ VOUCHER ============ -->
+      <section id="voucherView" style="display:none;">
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Voucher details</h3>
+              <div class="desc">PV number is auto-generated. Amount in words fills in automatically as you type the amount.</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>PV No.</label>
+              <input type="text" id="v_pvNo" readonly />
+            </div>
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="v_date" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Paid To</label>
+            <input type="text" id="v_paidTo" placeholder="Mr. / Ms. …" />
+          </div>
+          <div class="field">
+            <label>Being the amount paid towards</label>
+            <input type="text" id="v_towards" placeholder="e.g. Site petrol expenses for August" />
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Payment</h3>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field" style="max-width:220px;">
+              <label>Amount (₹)</label>
+              <input type="number" id="v_amount" min="0" step="0.01" placeholder="0.00" />
+            </div>
+            <div class="field" style="max-width:220px;">
+              <label>Paid By</label>
+              <select id="v_paymentMode">
+                <option value="Cash">Cash</option>
+                <option value="Cheque">Cheque</option>
+              </select>
+            </div>
+          </div>
+          <div class="hint" id="v_amountWordsHint" style="margin:-6px 0 14px;">Amount in words: —</div>
+
+          <div class="field-row" id="v_chequeFields" style="display:none;">
+            <div class="field">
+              <label>Cheque No</label>
+              <input type="text" id="v_chequeNo" />
+            </div>
+            <div class="field">
+              <label>Bank / Branch</label>
+              <input type="text" id="v_bankName" />
+            </div>
+            <div class="field">
+              <label>Cheque Date</label>
+              <input type="date" id="v_chequeDate" />
+            </div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn btn-primary" id="saveVoucherBtn" style="width:auto;">Save Voucher</button>
+          <button class="btn btn-ghost" id="previewVoucherBtn">Preview</button>
+          <button class="btn btn-ghost" id="newVoucherBtn">New Voucher</button>
+          <button class="btn btn-ghost" id="downloadVoucherPdfBtn">⬇ Download PDF</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Saved Vouchers</h3>
+              <div class="desc">Previously created vouchers — edit, re-download, or delete.</div>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="voucherSearch" placeholder="Search by PV no. or paid to…" />
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="history-table" id="voucherListTable">
+              <thead>
+                <tr>
+                  <th>PV No.</th>
+                  <th>Paid To</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Mode</th>
+                  <th>Created By</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="voucherListBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="voucherListEmpty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+            <div>No vouchers saved yet.</div>
           </div>
         </div>
       </section>
@@ -735,6 +1059,7 @@
                   <th>Next Cycle Date</th>
                   <th>Next Alert</th>
                   <th>Status</th>
+                  <th>Created By</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -1083,6 +1408,29 @@
           <button class="btn btn-primary" id="addStaffBtn" style="width:auto;">Create account</button>
         </div>
 
+        <div class="panel" id="staffCreatedPanel" style="display:none; border-color:var(--success); background:#f3faf5;">
+          <div class="panel-head">
+            <div>
+              <h3>Account created — save these credentials now</h3>
+              <div class="desc">Firebase never stores or returns a password once it's set, so this is the only time it'll be shown here. Copy it and pass it on to the staff member before leaving this screen.</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Email</label>
+              <input type="text" id="staffCreatedEmail" readonly />
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input type="text" id="staffCreatedPassword" readonly />
+            </div>
+          </div>
+          <div class="action-bar" style="margin-top:4px;">
+            <button class="btn btn-ghost" type="button" id="copyStaffCredentialsBtn">Copy credentials</button>
+            <button class="btn btn-ghost" type="button" id="dismissStaffCreatedBtn">Done — hide this</button>
+          </div>
+        </div>
+
         <div class="panel">
           <div class="panel-head"><h3>All staff</h3></div>
           <table class="history-table" id="staffTable">
@@ -1125,6 +1473,57 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" id="downloadBoqPdfFromPreviewBtn">Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Delivery Challan Preview Modal ================= -->
+<div class="modal-overlay" id="challanPreviewModal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3>Delivery Challan preview</h3>
+      <button class="modal-close" data-close="challanPreviewModal">×</button>
+    </div>
+    <div class="modal-body" style="background:#eee;">
+      <div class="invoice-sheet" id="challanSheetPreview"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="downloadChallanPdfFromPreviewBtn">Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Voucher Preview Modal ================= -->
+<div class="modal-overlay" id="voucherPreviewModal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3>Voucher preview</h3>
+      <button class="modal-close" data-close="voucherPreviewModal">×</button>
+    </div>
+    <div class="modal-body" style="background:#eee;">
+      <div class="invoice-sheet" id="voucherSheetPreview"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="downloadVoucherPdfFromPreviewBtn">Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Welcome (post-login) Modal ================= -->
+<div class="modal-overlay" id="welcomeModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Welcome</h3>
+      <button class="modal-close" data-close="welcomeModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:1.15rem; font-weight:700; color:var(--maroon-950); margin-bottom:6px;">
+        👋 Welcome back, <span id="welcomeUserName">there</span>!
+      </div>
+      <div class="desc" id="welcomeUserRole" style="margin-bottom:0;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="welcomeModalOkBtn" style="width:auto;">Let's go</button>
     </div>
   </div>
 </div>
@@ -1174,6 +1573,7 @@
 
       <div class="action-bar" style="margin-top:4px; margin-bottom:18px;">
         <button class="btn btn-primary" id="saveAmcFinanceBtn" style="width:auto;">Add Entry</button>
+        <button class="btn btn-ghost" id="downloadAmcFinanceExcelBtn">Download Excel</button>
       </div>
 
       <div style="overflow-x:auto;">
@@ -1403,6 +1803,8 @@
      pattern as #invoiceSheetPrint / #financeSheetPrint above. -->
 <div style="position:absolute; left:-9999px; top:0; width:820px;">
   <div class="invoice-sheet" id="boqSheetPrint"></div>
+  <div class="invoice-sheet" id="challanSheetPrint"></div>
+  <div class="invoice-sheet" id="voucherSheetPrint"></div>
 </div>
 
 <div style="position:absolute; left:-9999px; top:0; width:254px;">
@@ -1431,6 +1833,8 @@
 <script src="js/client-documents.js"></script>
 <script src="js/invoice.js"></script>
 <script src="js/boq.js"></script>
+<script src="js/deliverychallan.js"></script>
+<script src="js/voucher.js"></script>
 <script src="js/idcards.js"></script>
 <script src="js/amc.js"></script>
 <script src="js/amc-finance.js"></script>

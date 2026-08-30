@@ -49,6 +49,10 @@ async function addStaffAccount() {
     });
     await secondaryAuth.signOut();
     showToast(`Account created for ${email}.`, "success");
+    document.getElementById("staffCreatedEmail").value = email;
+    document.getElementById("staffCreatedPassword").value = password;
+    document.getElementById("staffCreatedPanel").style.display = "block";
+    document.getElementById("staffCreatedPanel").scrollIntoView({ behavior: "smooth", block: "center" });
     document.getElementById("s_name").value = "";
     document.getElementById("s_email").value = "";
     document.getElementById("s_password").value = "";
@@ -60,4 +64,22 @@ async function addStaffAccount() {
     btn.disabled = false;
     btn.textContent = original;
   }
+}
+
+function wireStaffCreatedPanel() {
+  document.getElementById("dismissStaffCreatedBtn").addEventListener("click", () => {
+    document.getElementById("staffCreatedPanel").style.display = "none";
+    document.getElementById("staffCreatedPassword").value = "";
+  });
+  document.getElementById("copyStaffCredentialsBtn").addEventListener("click", async () => {
+    const email = document.getElementById("staffCreatedEmail").value;
+    const password = document.getElementById("staffCreatedPassword").value;
+    const text = `Email: ${email}\nPassword: ${password}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("Credentials copied.", "success");
+    } catch (err) {
+      showToast("Couldn't copy automatically — select and copy the fields manually.", "error");
+    }
+  });
 }

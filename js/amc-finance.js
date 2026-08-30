@@ -180,3 +180,34 @@ async function deleteAmcFinanceEntry(id) {
     showToast(friendlyFirestoreError(err, "delete"), "error");
   }
 }
+
+// ---------------- Excel export ----------------
+
+function downloadAmcFinanceExcel() {
+  if (typeof XLSX === "undefined") {
+    showToast("The Excel library didn't load — check your internet connection and reload the page.", "error");
+    return;
+  }
+  if (!amcFinanceCache.length) {
+    showToast("No entries to export yet.", "error");
+    return;
+  }
+  const rows = [["Client", currentAmcFinanceClientName], ["Date", "Type", "Description", "Amount (₹)"]];
+  const sorted = [...amcFinanceCache].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const s = computeAmcFinanceSummary(sorted);
+  sorted.forEach(e => {
+    rows.push([e.date || "", e.type === "amount" ? "AMC Amount" : "Expense", e.description || "", Number(e.amount) || 0]);
+  });
+  rows.push([]);
+  rows.push(["", "", "AMC Amount Received", s.amount]);
+  rows.push(["", "", "Total Expense", s.expense]);
+  rows.push(["", "", "Balance", s.balance]);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [{ wch: 14 }, { wch: 16 }, { wch: 34 }, { wch: 16 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "AMC Finance");
+  const safeName = (currentAmcFinanceClientName || "client").replace(/\s+/g, "_");
+  XLSX.writeFile(wb, `AMC-Finance-${safeName}-${todayISO()}.xlsx`);
+  showToast("Excel file downloaded.", "success");
+}

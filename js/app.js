@@ -3,7 +3,7 @@
 // ============================================================
 
 function switchView(viewId) {
-  ["invoiceView", "historyView", "clientsView", "idCardsView", "boqView", "amcView", "employeesView", "suppliersView", "financeView", "staffView"].forEach(id => {
+  ["invoiceView", "historyView", "clientsView", "idCardsView", "boqView", "challanView", "voucherView", "amcView", "employeesView", "suppliersView", "financeView", "staffView"].forEach(id => {
     document.getElementById(id).style.display = (id === viewId) ? "block" : "none";
   });
   document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
@@ -15,6 +15,8 @@ function switchView(viewId) {
     clientsView: ["Clients", "Onboard clients and manage their saved details"],
     idCardsView: ["ID Cards", "Generate and manage employee ID cards"],
     boqView: ["BOQ", "Bill of quantities / quotations, with GST and PDF export"],
+    challanView: ["Delivery Challan", "Dispatch notes with items, GST, and PDF export"],
+    voucherView: ["Voucher", "Cash / cheque payment vouchers, with PDF export"],
     amcView: ["AMC", "Annual maintenance contracts, by renewal cycle"],
     employeesView: ["Employee Management", "Permanent & temporary staff, attendance and expenses"],
     suppliersView: ["Suppliers", "Compare supplier prices by item, synced to Google Sheets"],
@@ -30,6 +32,8 @@ function switchView(viewId) {
   if (viewId === "clientsView") loadClientsList();
   if (viewId === "idCardsView") loadIdCardsList();
   if (viewId === "boqView") loadBoqList();
+  if (viewId === "challanView") loadChallanList();
+  if (viewId === "voucherView") loadVoucherList();
   if (viewId === "amcView") loadAmcEntries();
   if (viewId === "employeesView") loadEmployeesList();
   if (viewId === "suppliersView") loadSupplierPrices();
@@ -69,6 +73,15 @@ function closeSidebar() {
     document.getElementById("financeNavItem").style.display = "flex";
   }
 
+  // One-time welcome popup right after a fresh login (not on every page refresh).
+  if (sessionStorage.getItem("justLoggedIn") === "1") {
+    sessionStorage.removeItem("justLoggedIn");
+    document.getElementById("welcomeUserName").textContent = profile.name || user.email;
+    document.getElementById("welcomeUserRole").textContent =
+      profile.role === "admin" ? "Signed in as Admin." : "Signed in as Staff.";
+    document.getElementById("welcomeModal").classList.add("open");
+  }
+
   // Nav
   document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -79,6 +92,7 @@ function closeSidebar() {
   document.getElementById("sidebarToggleBtn").addEventListener("click", toggleSidebar);
   document.getElementById("sidebarBackdrop").addEventListener("click", closeSidebar);
   document.getElementById("logoutBtn").addEventListener("click", logout);
+  document.getElementById("welcomeModalOkBtn").addEventListener("click", () => closeModal("welcomeModal"));
   document.getElementById("newInvoiceBtn").addEventListener("click", startNewInvoice);
 
   // Invoice builder
@@ -130,6 +144,7 @@ function closeSidebar() {
   wireAmcNotifyBanner();
   checkAmcNotificationsOnBoot(); // shows the red "due/overdue" banner on login, if any
   document.getElementById("saveAmcFinanceBtn").addEventListener("click", saveAmcFinanceEntry);
+  document.getElementById("downloadAmcFinanceExcelBtn").addEventListener("click", downloadAmcFinanceExcel);
   wireAmcFinanceTypeTabs();
 
   // Employee Management
@@ -162,6 +177,28 @@ function closeSidebar() {
   wireBoqSearch();
   startNewBoq();
 
+  // Delivery Challan
+  document.getElementById("addChallanRowBtn").addEventListener("click", () => addChallanItemRow());
+  document.getElementById("saveChallanBtn").addEventListener("click", saveChallan);
+  document.getElementById("previewChallanBtn").addEventListener("click", openChallanPreview);
+  document.getElementById("downloadChallanPdfFromPreviewBtn").addEventListener("click", () => downloadChallanPdf());
+  document.getElementById("newChallanBtn").addEventListener("click", startNewChallan);
+  document.getElementById("downloadChallanPdfBtn").addEventListener("click", () => downloadChallanPdf());
+  wireChallanGstTypeControls();
+  wireChallanClientAutocomplete();
+  wireChallanSearch();
+  startNewChallan();
+
+  // Voucher
+  document.getElementById("saveVoucherBtn").addEventListener("click", saveVoucher);
+  document.getElementById("previewVoucherBtn").addEventListener("click", openVoucherPreview);
+  document.getElementById("downloadVoucherPdfFromPreviewBtn").addEventListener("click", () => downloadVoucherPdf());
+  document.getElementById("newVoucherBtn").addEventListener("click", startNewVoucher);
+  document.getElementById("downloadVoucherPdfBtn").addEventListener("click", () => downloadVoucherPdf());
+  wireVoucherModeControls();
+  wireVoucherSearch();
+  startNewVoucher();
+
   // Finance
   populateFinanceFilterCategoryOptions();
   setFinanceFormType("income");
@@ -175,6 +212,7 @@ function closeSidebar() {
 
   // Staff
   document.getElementById("addStaffBtn").addEventListener("click", addStaffAccount);
+  wireStaffCreatedPanel();
 
   // History search
   wireHistorySearch();

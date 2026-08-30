@@ -63,6 +63,12 @@ service cloud.firestore {
     match /boqs/{boqId} {
       allow read, write: if isSignedIn();
     }
+    match /deliveryChallans/{challanId} {
+      allow read, write: if isSignedIn();
+    }
+    match /vouchers/{voucherId} {
+      allow read, write: if isSignedIn();
+    }
     match /financeEntries/{entryId} {
       allow read, write: if isAdmin();
     }
