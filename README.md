@@ -128,6 +128,76 @@ python3 -m http.server 8080
    GitHub Pages domain (e.g. `<your-github-username>.github.io`), otherwise sign-in will
    be blocked from that domain.
 
+## 5a. Connect your own domain (srikrithanya.in)
+
+You already own `srikrithanya.in`, so point it at the GitHub Pages site from section 5
+instead of using the `.github.io` URL day-to-day. This project already includes a
+`CNAME` file (containing `srikrithanya.in`) and a `robots.txt` at the repo root, plus a
+`noindex` tag on both pages — since this is an internal tool, those two keep it out of
+Google/Bing search results once it's reachable on a real domain. None of that replaces
+the actual access control, though — that's still the Firebase login wall, which stays in
+place no matter what domain points at the site.
+
+1. **Add the DNS records** with whoever you bought `srikrithanya.in` through (your
+   registrar's dashboard, under DNS / Nameservers management):
+   - Four **A records** on the root/apex (`@` or leave the host blank, depending on the
+     registrar) pointing to GitHub Pages' IP addresses:
+     ```
+     185.199.108.153
+     185.199.109.153
+     185.199.110.153
+     185.199.111.153
+     ```
+   - Optional but recommended — a **CNAME record** for `www` → `<your-github-username>.github.io`,
+     so `www.srikrithanya.in` also works instead of only the bare domain.
+2. **Tell GitHub about the domain.** Repo → **Settings → Pages** → under "Custom domain"
+   enter `srikrithanya.in` → **Save**. (The `CNAME` file already in this repo does the
+   same thing — if it's already there when you push, GitHub should pick it up
+   automatically, but setting it here too makes sure GitHub also runs its domain
+   ownership/DNS check.)
+3. **Wait for DNS to propagate** — usually well under an hour, occasionally up to 24.
+   You can check with `dig srikrithanya.in` or a site like whatsmydns.net.
+4. Once GitHub shows the domain as verified, tick **Enforce HTTPS** in the same Pages
+   settings — GitHub provisions a free certificate automatically; this can also take a
+   little while to become available after DNS first resolves.
+5. **Add the new domain to Firebase too** — Firebase console → **Authentication →
+   Settings → Authorized domains** → add both `srikrithanya.in` and `www.srikrithanya.in`
+   (if you set up the www CNAME). Skipping this is the single most common reason
+   sign-in silently breaks right after switching domains — Firebase Auth actively
+   refuses to complete sign-in from a domain it doesn't recognize.
+
+## 5b. Go-live checklist
+
+A few things worth double-checking before treating `srikrithanya.in` as the real,
+everyday URL your team uses:
+
+- [ ] **Firestore rules are published**, and match the full rules block in section 2
+      above (every collection this CRM uses — including the newer ones like
+      `deliveryChallans`, `vouchers`, `employees`, `clientDocuments` — needs its `match`
+      block, or that screen will fail with a permission error the moment someone uses it
+      on the live domain).
+- [ ] **Staff accounts exist with the right roles** — Admin for yourself, Staff/Accountant
+      for the team, created from the **Staff Access** tab (not left as raw Firebase
+      Authentication users with no Firestore role, which the app doesn't know what to do
+      with).
+- [ ] **Apps Script Web App is deployed** (not just saved) — Client Documents and
+      Suppliers both depend on it. Re-check `js/appscript-config.js` has the real
+      deployed Web App URL and matching secret, not `REPLACE_ME`.
+- [ ] **Company details in `js/invoice.js`** (the `SELLER` object — name, address,
+      GSTIN, bank details) are your final, correct details — these print on every
+      invoice, BOQ, delivery challan, and voucher.
+- [ ] **Logo and signature images** in `assets/` are the final versions you want on
+      customer-facing documents.
+- [ ] **One end-to-end smoke test on the live domain**: sign in, create a throwaway
+      invoice, download its PDF, then delete it — confirms Firestore, the PDF library,
+      and Firebase Auth are all working together on `srikrithanya.in` specifically (not
+      just on the `.github.io` URL you tested on earlier).
+- [ ] **Data backups**: Firestore on the free Spark plan doesn't back itself up
+      automatically. For a small team this is usually fine — but if you want real peace
+      of mind later, periodic manual exports are the straightforward option (this needs
+      the paid Blaze plan for the built-in export tool, so it's a "later" item, not a
+      blocker to going live now).
+
 ## 6. Client Documents via Google Drive (optional)
 
 The **Documents** icon on each client (Clients tab) lets you upload a PDF per client —
