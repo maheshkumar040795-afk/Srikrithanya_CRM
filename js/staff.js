@@ -9,16 +9,59 @@ async function loadStaffList() {
     body.innerHTML = "";
     snap.forEach(doc => {
       const u = doc.data();
+      const uid = doc.id;
+      const roleStyle = u.role === "admin" ? "background:#fdecea;color:#b3261e;"
+        : u.role === "accountant" ? "background:#eef0ff;color:#3d4bb3;" : "";
+      const isSelf = auth.currentUser && auth.currentUser.uid === uid;
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${escapeHtml(u.name || "—")}</td>
         <td>${escapeHtml(u.email || "—")}</td>
-        <td><span class="pill" style="${u.role === "admin" ? "background:#fdecea;color:#b3261e;" : ""}">${escapeHtml(u.role || "staff")}</span></td>
+        <td><span class="pill" style="${roleStyle}">${escapeHtml(u.role || "staff")}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" data-delete-uid="${escapeHtml(uid)}" data-delete-email="${escapeHtml(u.email || "")}" title="${isSelf ? "You can't delete your own account" : "Delete"}" ${isSelf ? "disabled" : ""}>🗑</button>
+          </div>
+        </td>
       `;
       body.appendChild(tr);
     });
+    body.querySelectorAll("[data-delete-uid]").forEach(btn => {
+      btn.addEventListener("click", () => deleteStaffAccount(btn.getAttribute("data-delete-uid"), btn.getAttribute("data-delete-email")));
+    });
   } catch (err) {
     console.error(err);
+  }
+}
+
+/** Removes the staff member's profile/role from the CRM (Firestore). Firebase
+ *  Authentication has no client-side API for deleting ANOTHER user's login —
+ *  that requires either the Firebase console or a backend with the Admin SDK,
+ *  neither of which this project has (Spark plan, no Cloud Functions). So this
+ *  revokes their CRM access and removes them from this list, but to fully stop
+ *  them from ever signing in again, the underlying login also needs deleting
+ *  from Firebase console → Authentication → Users — the confirm dialog below
+ *  spells that out rather than implying this button does it all. */
+async function deleteStaffAccount(uid, email) {
+  if (auth.currentUser && auth.currentUser.uid === uid) {
+    showToast("You can't delete your own account while signed in as it.", "error");
+    return;
+  }
+  const confirmed = confirm(
+    `Remove ${email} from Staff Access?\n\n` +
+    `This deletes their profile and role here, so they lose access to the CRM's data and permissions immediately.\n\n` +
+    `Note: this does NOT delete their underlying login. To fully stop "${email}" from ever signing in again, also go to ` +
+    `Firebase console → Authentication → Users → find them → Delete user.\n\n` +
+    `Continue removing their CRM profile now?`
+  );
+  if (!confirmed) return;
+  try {
+    await db.collection("users").doc(uid).delete();
+    showToast("Staff profile removed. Also delete their login in Firebase console to fully revoke access.", "success");
+    loadStaffList();
+  } catch (err) {
+    console.error(err);
+    showToast(friendlyFirestoreError(err, "delete"), "error");
   }
 }
 

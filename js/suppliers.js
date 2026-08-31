@@ -62,17 +62,26 @@ async function loadSupplierPrices() {
 
   empty.querySelector("div").textContent = "No supplier prices yet. Add one above.";
   populateSupplierDatalists();
-  const search = document.getElementById("supplierSearch");
-  renderSupplierPricesTable(filterSupplierPrices(search ? search.value.trim() : ""));
+  applySupplierFilters();
 }
 
 function populateSupplierDatalists() {
-  const categories = Array.from(new Set(supplierPricesCache.map(r => r.Category).filter(Boolean)));
+  const categories = Array.from(new Set(supplierPricesCache.map(r => r.Category).filter(Boolean))).sort();
   const items = Array.from(new Set(supplierPricesCache.map(r => r.Item).filter(Boolean)));
-  const companies = Array.from(new Set(supplierPricesCache.map(r => r.Company).filter(Boolean)));
+  const companies = Array.from(new Set(supplierPricesCache.map(r => r.Company).filter(Boolean))).sort();
   document.getElementById("supplierCategoryDatalist").innerHTML = categories.map(c => `<option value="${escapeHtml(c)}"></option>`).join("");
   document.getElementById("supplierItemDatalist").innerHTML = items.map(i => `<option value="${escapeHtml(i)}"></option>`).join("");
   document.getElementById("supplierCompanyDatalist").innerHTML = companies.map(c => `<option value="${escapeHtml(c)}"></option>`).join("");
+
+  // Filter dropdowns — rebuilt from the same data, keeping whatever was already selected if it still exists.
+  const catSelect = document.getElementById("supplierFilterCategory");
+  const compSelect = document.getElementById("supplierFilterCompany");
+  const prevCat = catSelect.value;
+  const prevComp = compSelect.value;
+  catSelect.innerHTML = '<option value="">All Categories</option>' + categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  compSelect.innerHTML = '<option value="">All Companies</option>' + companies.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  if (categories.includes(prevCat)) catSelect.value = prevCat;
+  if (companies.includes(prevComp)) compSelect.value = prevComp;
 }
 
 // ---------------- Search ----------------
@@ -93,14 +102,27 @@ function matchesSupplierSearch(row, q) {
   return false;
 }
 
+// Combines the free-text search with the Category and Company dropdown filters (all AND'd together),
+// so you can e.g. pick "MS Pipe" to compare just that category, or add a company on top of that.
 function filterSupplierPrices(q) {
-  if (!q) return supplierPricesCache;
-  return supplierPricesCache.filter(r => matchesSupplierSearch(r, q));
+  const category = document.getElementById("supplierFilterCategory").value;
+  const company = document.getElementById("supplierFilterCompany").value;
+  return supplierPricesCache.filter(r => {
+    if (category && r.Category !== category) return false;
+    if (company && r.Company !== company) return false;
+    return matchesSupplierSearch(r, q);
+  });
+}
+
+function applySupplierFilters() {
+  const search = document.getElementById("supplierSearch");
+  renderSupplierPricesTable(filterSupplierPrices(search ? search.value.trim() : ""));
 }
 
 function wireSupplierSearch() {
-  const input = document.getElementById("supplierSearch");
-  input.addEventListener("input", () => renderSupplierPricesTable(filterSupplierPrices(input.value.trim())));
+  document.getElementById("supplierSearch").addEventListener("input", applySupplierFilters);
+  document.getElementById("supplierFilterCategory").addEventListener("change", applySupplierFilters);
+  document.getElementById("supplierFilterCompany").addEventListener("change", applySupplierFilters);
 }
 
 // ---------------- Table ----------------

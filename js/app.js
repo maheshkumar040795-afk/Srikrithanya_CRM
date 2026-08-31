@@ -3,6 +3,10 @@
 // ============================================================
 
 function switchView(viewId) {
+  const restrictedForAccountant = ["clientsView", "boqView", "amcView", "staffView"];
+  if (window.currentUserRole === "accountant" && restrictedForAccountant.includes(viewId)) {
+    viewId = "invoiceView"; // guards direct calls too, not just the hidden nav buttons
+  }
   ["invoiceView", "historyView", "clientsView", "idCardsView", "boqView", "challanView", "voucherView", "amcView", "employeesView", "suppliersView", "financeView", "staffView"].forEach(id => {
     document.getElementById(id).style.display = (id === viewId) ? "block" : "none";
   });
@@ -72,6 +76,15 @@ function closeSidebar() {
     document.getElementById("staffNavItem").style.display = "flex";
     document.getElementById("financeNavItem").style.display = "flex";
   }
+  if (profile.role === "accountant") {
+    // Accountant gets Finance (it's their screen) but not Clients/BOQ/AMC/Staff Access.
+    document.getElementById("financeNavItem").style.display = "flex";
+    ["clientsView", "boqView", "amcView"].forEach(viewId => {
+      const navBtn = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+      if (navBtn) navBtn.style.display = "none";
+    });
+  }
+  window.currentUserRole = profile.role || "staff"; // used by switchView's guard below
 
   // One-time welcome popup right after a fresh login (not on every page refresh).
   if (sessionStorage.getItem("justLoggedIn") === "1") {

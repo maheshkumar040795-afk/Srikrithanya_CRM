@@ -40,6 +40,11 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+    function isAccountant() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'accountant';
+    }
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && (request.auth.uid == userId || isAdmin());
@@ -70,7 +75,7 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
     match /financeEntries/{entryId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAdmin() || isAccountant();
     }
     match /amcFinanceEntries/{entryId} {
       allow read, write: if isSignedIn();
