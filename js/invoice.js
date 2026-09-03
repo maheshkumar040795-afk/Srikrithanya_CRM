@@ -8,7 +8,7 @@
 const SELLER = {
   name: "SRIKRITHANYA PRIVATE LIMITED",
   address: "No. 15, Shanthipuram, 4th Street, Thirumullaivoyal, Chennai – 600062",
-  phone: "93609 06464",
+  phone: "88070 03061 / 93446 43061",
   email: "letsconnectsrikrithanya@gmail.com",
   gstin: "33ABNCS1923P1ZV",
   state: "Tamil Nadu",
