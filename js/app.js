@@ -111,7 +111,7 @@ function closeSidebar() {
   // Invoice builder
   document.getElementById("addRowBtn").addEventListener("click", () => addItemRow());
   document.getElementById("saveInvoiceBtn").addEventListener("click", saveInvoice);
-  document.getElementById("previewBtn").addEventListener("click", openPreview);
+  document.getElementById("previewBtn").addEventListener("click", () => openPreview());
   document.getElementById("printBtn").addEventListener("click", printInvoice);
   wireBuyerAutocomplete();
   wireInvoiceGstTypeControls();
@@ -156,8 +156,11 @@ function closeSidebar() {
   wireAmcSearch();
   wireAmcNotifyBanner();
   checkAmcNotificationsOnBoot(); // shows the red "due/overdue" banner on login, if any
+  document.getElementById("downloadAmcPdfBtn").addEventListener("click", downloadAmcPdf);
+  document.getElementById("downloadAmcExcelBtn").addEventListener("click", downloadAmcExcel);
   document.getElementById("saveAmcFinanceBtn").addEventListener("click", saveAmcFinanceEntry);
   document.getElementById("downloadAmcFinanceExcelBtn").addEventListener("click", downloadAmcFinanceExcel);
+  document.getElementById("downloadAmcFinancePdfBtn").addEventListener("click", downloadAmcFinancePdf);
   wireAmcFinanceTypeTabs();
 
   // Employee Management
@@ -168,20 +171,27 @@ function closeSidebar() {
   wireEmployeeSearch();
   document.getElementById("saveEmployeeAttendanceBtn").addEventListener("click", saveEmployeeAttendanceEntry);
   document.getElementById("saveEmployeeExpenseBtn").addEventListener("click", saveEmployeeExpenseEntry);
+  document.getElementById("cancelEmployeeExpenseEditBtn").addEventListener("click", resetEmployeeExpenseForm);
   document.getElementById("downloadEmployeeAttendanceExcelBtn").addEventListener("click", downloadEmployeeAttendanceExcel);
   document.getElementById("downloadEmployeeExpenseExcelBtn").addEventListener("click", downloadEmployeeExpenseExcel);
+  document.getElementById("downloadEmployeeAttendancePdfBtn").addEventListener("click", downloadEmployeeAttendancePdf);
+  document.getElementById("downloadEmployeeExpensePdfBtn").addEventListener("click", downloadEmployeeExpensePdf);
+  document.getElementById("downloadEmployeesPdfBtn").addEventListener("click", downloadEmployeesPdf);
+  document.getElementById("downloadEmployeesExcelBtn").addEventListener("click", downloadEmployeesExcel);
   resetEmployeeForm();
 
   // Suppliers
   document.getElementById("saveSupplierPriceBtn").addEventListener("click", saveSupplierPrice);
   document.getElementById("cancelSupplierEditBtn").addEventListener("click", resetSupplierPriceForm);
   document.getElementById("refreshSupplierPricesBtn").addEventListener("click", loadSupplierPrices);
+  document.getElementById("downloadSupplierPdfBtn").addEventListener("click", downloadSupplierPricesPdf);
+  document.getElementById("downloadSupplierExcelBtn").addEventListener("click", downloadSupplierPricesExcel);
   wireSupplierSearch();
 
   // BOQ
   document.getElementById("addBoqRowBtn").addEventListener("click", () => addBoqItemRow());
   document.getElementById("saveBoqBtn").addEventListener("click", saveBoq);
-  document.getElementById("previewBoqBtn").addEventListener("click", openBoqPreview);
+  document.getElementById("previewBoqBtn").addEventListener("click", () => openBoqPreview());
   document.getElementById("downloadBoqPdfFromPreviewBtn").addEventListener("click", () => downloadBoqPdf());
   document.getElementById("newBoqBtn").addEventListener("click", startNewBoq);
   document.getElementById("downloadBoqPdfBtn").addEventListener("click", () => downloadBoqPdf());
@@ -193,7 +203,7 @@ function closeSidebar() {
   // Delivery Challan
   document.getElementById("addChallanRowBtn").addEventListener("click", () => addChallanItemRow());
   document.getElementById("saveChallanBtn").addEventListener("click", saveChallan);
-  document.getElementById("previewChallanBtn").addEventListener("click", openChallanPreview);
+  document.getElementById("previewChallanBtn").addEventListener("click", () => openChallanPreview());
   document.getElementById("downloadChallanPdfFromPreviewBtn").addEventListener("click", () => downloadChallanPdf());
   document.getElementById("newChallanBtn").addEventListener("click", startNewChallan);
   document.getElementById("downloadChallanPdfBtn").addEventListener("click", () => downloadChallanPdf());
@@ -204,7 +214,7 @@ function closeSidebar() {
 
   // Voucher
   document.getElementById("saveVoucherBtn").addEventListener("click", saveVoucher);
-  document.getElementById("previewVoucherBtn").addEventListener("click", openVoucherPreview);
+  document.getElementById("previewVoucherBtn").addEventListener("click", () => openVoucherPreview());
   document.getElementById("downloadVoucherPdfFromPreviewBtn").addEventListener("click", () => downloadVoucherPdf());
   document.getElementById("newVoucherBtn").addEventListener("click", startNewVoucher);
   document.getElementById("downloadVoucherPdfBtn").addEventListener("click", () => downloadVoucherPdf());

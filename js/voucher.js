@@ -44,7 +44,7 @@ async function reserveNextVoucherNumber() {
 
 function resetVoucherForm(newNumber) {
   currentVoucherId = null;
-  document.getElementById("v_pvNo").value = newNumber || "Generating…";
+  document.getElementById("v_pvNo").value = newNumber || "";
   document.getElementById("v_date").value = todayISO();
   document.getElementById("v_paidTo").value = "";
   document.getElementById("v_towards").value = "";
@@ -57,16 +57,9 @@ function resetVoucherForm(newNumber) {
   updateVoucherAmountWords();
 }
 
-async function startNewVoucher() {
+function startNewVoucher() {
   resetVoucherForm();
-  try {
-    const num = await reserveNextVoucherNumber();
-    document.getElementById("v_pvNo").value = num;
-  } catch (err) {
-    console.error(err);
-    document.getElementById("v_pvNo").value = "PV-" + Date.now().toString().slice(-4);
-    showToast("Couldn't reach the database for numbering — check your Firebase setup.", "error");
-  }
+  document.getElementById("v_pvNo").focus();
 }
 
 function collectVoucherFormData() {
@@ -102,6 +95,7 @@ function loadVoucherIntoForm(data, docId) {
 
 async function saveVoucher() {
   const data = collectVoucherFormData();
+  if (!data.pvNo.trim()) { showToast("Enter a voucher number before saving.", "error"); return; }
   if (!data.paidTo.trim()) {
     showToast("Add who this was paid to before saving.", "error");
     return;
@@ -181,6 +175,7 @@ function renderVoucherList(list) {
       <td>${escapeHtml(v.createdBy || "—")}</td>
       <td>
         <div class="row-actions">
+          <button class="icon-btn" data-action="preview" title="Preview">👁</button>
           <button class="icon-btn" data-action="edit" title="Edit">✎</button>
           <button class="icon-btn" data-action="download" title="Download PDF">⬇</button>
           <button class="icon-btn" data-action="delete" title="Delete">🗑</button>
@@ -195,6 +190,10 @@ function renderVoucherList(list) {
 }
 
 function handleVoucherListAction(action, v) {
+  if (action === "preview") {
+    openVoucherPreview(v);
+    return;
+  }
   if (action === "edit") {
     loadVoucherIntoForm(v, v.id);
     showToast(`Editing ${v.pvNo}`, "success");
@@ -291,8 +290,8 @@ function renderVoucherHTML(data) {
 
 // ---------------- Preview ----------------
 
-function openVoucherPreview() {
-  const data = collectVoucherFormData();
+function openVoucherPreview(data) {
+  data = data || collectVoucherFormData();
   document.getElementById("voucherSheetPreview").innerHTML = renderVoucherHTML(data);
   document.getElementById("voucherPreviewModal").classList.add("open");
 }

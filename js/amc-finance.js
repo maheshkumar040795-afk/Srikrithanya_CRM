@@ -211,3 +211,26 @@ function downloadAmcFinanceExcel() {
   XLSX.writeFile(wb, `AMC-Finance-${safeName}-${todayISO()}.xlsx`);
   showToast("Excel file downloaded.", "success");
 }
+
+function downloadAmcFinancePdf() {
+  if (!amcFinanceCache.length) {
+    showToast("No entries to export yet.", "error");
+    return;
+  }
+  const sorted = [...amcFinanceCache].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const s = computeAmcFinanceSummary(sorted);
+  const rows = sorted.map(e => [
+    fmtDate(e.date), e.type === "amount" ? "AMC Amount" : "Expense", e.description || "", fmtMoney(e.amount)
+  ]);
+  rows.push(["", "", "AMC Amount Received", fmtMoney(s.amount)]);
+  rows.push(["", "", "Total Expense", fmtMoney(s.expense)]);
+  rows.push(["", "", "Balance", fmtMoney(s.balance)]);
+  const safeName = (currentAmcFinanceClientName || "client").replace(/\s+/g, "_");
+  downloadRowsAsPdf(
+    `AMC Finance — ${currentAmcFinanceClientName || ""}`,
+    ["Date", "Type", "Description", "Amount"],
+    rows,
+    `AMC-Finance-${safeName}-${todayISO()}.pdf`,
+    "portrait"
+  );
+}

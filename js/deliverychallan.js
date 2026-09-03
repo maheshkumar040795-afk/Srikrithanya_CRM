@@ -141,7 +141,7 @@ async function reserveNextChallanNumber() {
 function resetChallanForm(newNumber) {
   currentChallanId = null;
   challanItemRows = [];
-  document.getElementById("dc_challanNo").value = newNumber || "Generating…";
+  document.getElementById("dc_challanNo").value = newNumber || "";
   document.getElementById("dc_challanType").value = "Job Work";
   document.getElementById("dc_orderDate").value = todayISO();
   document.getElementById("dc_challanDate").value = todayISO();
@@ -163,16 +163,9 @@ function resetChallanForm(newNumber) {
   addChallanItemRow();
 }
 
-async function startNewChallan() {
+function startNewChallan() {
   resetChallanForm();
-  try {
-    const num = await reserveNextChallanNumber();
-    document.getElementById("dc_challanNo").value = num;
-  } catch (err) {
-    console.error(err);
-    document.getElementById("dc_challanNo").value = "DC-" + Date.now().toString().slice(-4);
-    showToast("Couldn't reach the database for numbering — check your Firebase setup.", "error");
-  }
+  document.getElementById("dc_challanNo").focus();
 }
 
 function collectChallanFormData() {
@@ -238,6 +231,7 @@ function loadChallanIntoForm(data, docId) {
 
 async function saveChallan() {
   const data = collectChallanFormData();
+  if (!data.challanNo.trim()) { showToast("Enter a challan number before saving.", "error"); return; }
   if (!data.clientName.trim()) {
     showToast("Add a client / site name before saving.", "error");
     return;
@@ -317,6 +311,7 @@ function renderChallanList(list) {
       <td>${escapeHtml(c.createdBy || "—")}</td>
       <td>
         <div class="row-actions">
+          <button class="icon-btn" data-action="preview" title="Preview">👁</button>
           <button class="icon-btn" data-action="edit" title="Edit">✎</button>
           <button class="icon-btn" data-action="download" title="Download PDF">⬇</button>
           <button class="icon-btn" data-action="delete" title="Delete">🗑</button>
@@ -331,6 +326,10 @@ function renderChallanList(list) {
 }
 
 function handleChallanListAction(action, c) {
+  if (action === "preview") {
+    openChallanPreview(c);
+    return;
+  }
   if (action === "edit") {
     loadChallanIntoForm(c, c.id);
     showToast(`Editing ${c.challanNo}`, "success");
@@ -526,8 +525,8 @@ function renderChallanHTML(data) {
 
 // ---------------- Preview ----------------
 
-function openChallanPreview() {
-  const data = collectChallanFormData();
+function openChallanPreview(data) {
+  data = data || collectChallanFormData();
   document.getElementById("challanSheetPreview").innerHTML = renderChallanHTML(data);
   document.getElementById("challanPreviewModal").classList.add("open");
 }

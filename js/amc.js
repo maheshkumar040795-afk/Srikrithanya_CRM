@@ -201,6 +201,41 @@ function applyAmcFiltersAndRender() {
   renderAmcTable(getFilteredAmcList());
 }
 
+// ---------------- Export: Excel + PDF ----------------
+
+function amcExportRows(list) {
+  return list.map(e => {
+    const s = computeAmcStatus(e);
+    return [
+      e.clientName || "", AMC_CYCLE_LABELS[e.cycle] || e.cycle || "",
+      fmtDate(e.startDate), fmtDate(e.endDate),
+      e.nextCycleDate ? fmtDate(e.nextCycleDate) : "—",
+      fmtDate(s.dueDate), amcStatusLabel(s), e.createdBy || ""
+    ];
+  });
+}
+
+function downloadAmcExcel() {
+  const list = getFilteredAmcList();
+  downloadRowsAsExcel(
+    "AMC",
+    ["Client Name", "Cycle", "Start Date", "End Date", "Next Cycle Date", "Due Date", "Status", "Created By"],
+    amcExportRows(list),
+    `AMC-${AMC_CYCLE_LABELS[currentAmcCycleTab] || currentAmcCycleTab}-${todayISO()}.xlsx`,
+    [24, 12, 12, 12, 14, 12, 12, 16]
+  );
+}
+
+function downloadAmcPdf() {
+  const list = getFilteredAmcList();
+  downloadRowsAsPdf(
+    `AMC Contracts — ${AMC_CYCLE_LABELS[currentAmcCycleTab] || currentAmcCycleTab}`,
+    ["Client Name", "Cycle", "Start Date", "End Date", "Next Cycle Date", "Due Date", "Status", "Created By"],
+    amcExportRows(list),
+    `AMC-${AMC_CYCLE_LABELS[currentAmcCycleTab] || currentAmcCycleTab}-${todayISO()}.pdf`
+  );
+}
+
 function renderAmcTable(list) {
   const body = document.getElementById("amcBody");
   const empty = document.getElementById("amcEmpty");

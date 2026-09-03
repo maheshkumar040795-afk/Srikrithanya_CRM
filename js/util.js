@@ -92,3 +92,66 @@ function friendlyFirestoreError(err, action) {
   }
   return `Couldn't ${action}${err && err.message ? ": " + err.message : " — check your Firebase setup."}`;
 }
+
+// ---------------- Generic table exports (Excel + PDF) ----------------
+// Reused by AMC, AMC Finance, Suppliers, and Employee Attendance/Expense —
+// anywhere a simple table of rows needs to leave the app as a file.
+// `rows` is an array of arrays already formatted for display (strings/numbers).
+
+function downloadRowsAsExcel(sheetName, headers, rows, filename, colWidths) {
+  if (typeof XLSX === "undefined") {
+    showToast("The Excel library didn't load — check your internet connection and reload the page.", "error");
+    return;
+  }
+  if (!rows.length) {
+    showToast("Nothing to export.", "error");
+    return;
+  }
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  if (colWidths) ws["!cols"] = colWidths.map(w => ({ wch: w }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, (sheetName || "Sheet1").slice(0, 31));
+  XLSX.writeFile(wb, filename);
+  showToast("Excel file downloaded.", "success");
+}
+
+async function downloadRowsAsPdf(title, headers, rows, filename, orientation) {
+  if (typeof html2pdf === "undefined") {
+    showToast("The PDF library didn't load — check your internet connection and reload the page.", "error");
+    return;
+  }
+  if (!rows.length) {
+    showToast("Nothing to export.", "error");
+    return;
+  }
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "padding:20px;font-family:Arial,Helvetica,sans-serif;background:#fff;";
+  wrap.innerHTML = `
+    <div style="font-size:16px;font-weight:700;margin-bottom:2px;">${escapeHtml(title)}</div>
+    <div style="font-size:10.5px;color:#777;margin-bottom:12px;">Generated ${fmtDate(todayISO())}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10.5px;">
+      <thead>
+        <tr>${headers.map(h => `<th style="border:1px solid #ccc;padding:6px 8px;background:#f4f0ee;text-align:left;white-space:nowrap;">${escapeHtml(h)}</th>`).join("")}</tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => `<tr>${r.map(c => `<td style="border:1px solid #ddd;padding:5px 8px;">${escapeHtml(c === null || c === undefined || c === "" ? "—" : String(c))}</td>`).join("")}</tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+  document.body.appendChild(wrap);
+  try {
+    const blob = await html2pdf().set({
+      margin: [10, 8, 10, 8],
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: "mm", format: "a4", orientation: orientation || "landscape" }
+    }).from(wrap).outputPdf("blob");
+    triggerBlobDownload(blob, filename);
+    showToast("PDF downloaded.", "success");
+  } catch (err) {
+    console.error(err);
+    showToast(err.message || "Couldn't generate the PDF.", "error");
+  } finally {
+    wrap.remove();
+  }
+}

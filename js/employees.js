@@ -16,6 +16,7 @@ let currentEmployeeName = "";
 
 let employeeAttendanceCache = [];
 let employeeExpenseCache = [];
+let editingExpenseId = null; // Firestore doc id when editing an expense entry; null for a new one
 
 // ---------------- Add-employee form: Permanent / Temporary tabs ----------------
 
@@ -153,6 +154,36 @@ function filterEmployees(q) {
     list = list.filter(e => (e.name || "").toLowerCase().includes(q) || (e.role || "").toLowerCase().includes(q));
   }
   return list;
+}
+
+// ---------------- Export: Excel + PDF (employee directory) ----------------
+
+function employeeExportRows() {
+  const q = document.getElementById("employeeSearch").value.trim().toLowerCase();
+  return filterEmployees(q).map(e => [
+    e.name || "", e.role || "", e.empType === "temporary" ? "Temporary" : "Permanent",
+    e.contact || "", e.joinDate ? fmtDate(e.joinDate) : "—"
+  ]);
+}
+
+function downloadEmployeesExcel() {
+  downloadRowsAsExcel(
+    "Employees",
+    ["Name", "Role", "Type", "Contact", "Joined On"],
+    employeeExportRows(),
+    `Employees-${employeeListFilterType}-${todayISO()}.xlsx`,
+    [22, 18, 12, 16, 14]
+  );
+}
+
+function downloadEmployeesPdf() {
+  downloadRowsAsPdf(
+    `Employees — ${employeeListFilterType === "temporary" ? "Temporary" : "Permanent"}`,
+    ["Name", "Role", "Type", "Contact", "Joined On"],
+    employeeExportRows(),
+    `Employees-${employeeListFilterType}-${todayISO()}.pdf`,
+    "portrait"
+  );
 }
 
 function renderEmployeesTable(list) {
@@ -388,6 +419,26 @@ function downloadEmployeeAttendanceExcel() {
   showToast("Excel file downloaded.", "success");
 }
 
+function downloadEmployeeAttendancePdf() {
+  if (!employeeAttendanceCache.length) {
+    showToast("No attendance entries to export yet.", "error");
+    return;
+  }
+  const sorted = [...employeeAttendanceCache].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const rows = sorted.map(a => [fmtDate(a.date), ATTENDANCE_STATUS_LABELS[a.status] || a.status || "", a.note || ""]);
+  rows.push(["", "Present", String(sorted.filter(a => a.status === "present").length)]);
+  rows.push(["", "Absent", String(sorted.filter(a => a.status === "absent").length)]);
+  rows.push(["", "Half Day / Leave", String(sorted.filter(a => a.status === "half-day" || a.status === "leave").length)]);
+  const safeName = (currentEmployeeName || "employee").replace(/\s+/g, "_");
+  downloadRowsAsPdf(
+    `Attendance — ${currentEmployeeName || ""}`,
+    ["Date", "Status", "Note"],
+    rows,
+    `Attendance-${safeName}-${todayISO()}.pdf`,
+    "portrait"
+  );
+}
+
 // ============================================================
 // Expense / Advance — date-wise ledger, any number of entries per date
 // ============================================================
@@ -404,12 +455,29 @@ async function openEmployeeExpense(record) {
   currentEmployeeId = record.id;
   currentEmployeeName = record.name || "";
   document.getElementById("employeeExpenseModalTitle").textContent = `Expense / Advance — ${currentEmployeeName}`;
+  resetEmployeeExpenseForm();
+  document.getElementById("employeeExpenseModal").classList.add("open");
+  await loadEmployeeExpenseEntries();
+}
+
+function resetEmployeeExpenseForm() {
+  editingExpenseId = null;
   document.getElementById("empExp_date").value = todayISO();
   document.getElementById("empExp_category").value = "";
   document.getElementById("empExp_description").value = "";
   document.getElementById("empExp_amount").value = "";
-  document.getElementById("employeeExpenseModal").classList.add("open");
-  await loadEmployeeExpenseEntries();
+  document.getElementById("saveEmployeeExpenseBtn").textContent = "Add Entry";
+  document.getElementById("cancelEmployeeExpenseEditBtn").style.display = "none";
+}
+
+function loadExpenseIntoForm(x) {
+  editingExpenseId = x.id;
+  document.getElementById("empExp_date").value = x.date || "";
+  document.getElementById("empExp_category").value = x.category || "";
+  document.getElementById("empExp_description").value = x.description || "";
+  document.getElementById("empExp_amount").value = x.amount != null ? x.amount : "";
+  document.getElementById("saveEmployeeExpenseBtn").textContent = "Update Entry";
+  document.getElementById("cancelEmployeeExpenseEditBtn").style.display = "inline-flex";
 }
 
 async function loadEmployeeExpenseEntries() {
@@ -462,6 +530,7 @@ function renderEmployeeExpenseTable(list) {
       <td class="amt-expense">${fmtMoney(x.amount)}</td>
       <td>
         <div class="row-actions">
+          <button class="icon-btn" data-edit="${x.id}" title="Edit">✎</button>
           <button class="icon-btn" data-delete="${x.id}" title="Delete">🗑</button>
         </div>
       </td>
@@ -470,6 +539,12 @@ function renderEmployeeExpenseTable(list) {
   });
   body.querySelectorAll("[data-delete]").forEach(btn => {
     btn.addEventListener("click", () => deleteEmployeeExpenseEntry(btn.getAttribute("data-delete")));
+  });
+  body.querySelectorAll("[data-edit]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const entry = employeeExpenseCache.find(x => x.id === btn.getAttribute("data-edit"));
+      if (entry) loadExpenseIntoForm(entry);
+    });
   });
 }
 
@@ -486,27 +561,32 @@ async function saveEmployeeExpenseEntry() {
   const data = { employeeId: currentEmployeeId, employeeName: currentEmployeeName, date, category, description, amount };
 
   const btn = document.getElementById("saveEmployeeExpenseBtn");
-  const original = btn.textContent;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>';
 
   try {
     const user = auth.currentUser;
-    await db.collection("employeeExpenses").add(Object.assign({}, data, {
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      createdBy: user ? user.email : null
-    }));
-    showToast("Entry saved.", "success");
-    document.getElementById("empExp_category").value = "";
-    document.getElementById("empExp_description").value = "";
-    document.getElementById("empExp_amount").value = "";
+    if (editingExpenseId) {
+      await db.collection("employeeExpenses").doc(editingExpenseId).set(Object.assign({}, data, {
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: user ? user.email : null
+      }), { merge: true });
+      showToast("Entry updated.", "success");
+    } else {
+      await db.collection("employeeExpenses").add(Object.assign({}, data, {
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdBy: user ? user.email : null
+      }));
+      showToast("Entry saved.", "success");
+    }
+    resetEmployeeExpenseForm();
     await loadEmployeeExpenseEntries();
   } catch (err) {
     console.error(err);
     showToast(friendlyFirestoreError(err, "save"), "error");
   } finally {
     btn.disabled = false;
-    btn.textContent = original;
+    btn.textContent = editingExpenseId ? "Update Entry" : "Add Entry";
   }
 }
 
@@ -514,6 +594,7 @@ async function deleteEmployeeExpenseEntry(id) {
   if (!confirm("Delete this entry? This can't be undone.")) return;
   try {
     await db.collection("employeeExpenses").doc(id).delete();
+    if (editingExpenseId === id) resetEmployeeExpenseForm();
     showToast("Entry deleted.", "success");
     await loadEmployeeExpenseEntries();
   } catch (err) {
@@ -553,4 +634,29 @@ function downloadEmployeeExpenseExcel() {
   const safeName = (currentEmployeeName || "employee").replace(/\s+/g, "_");
   XLSX.writeFile(wb, `Expense-${safeName}-${todayISO()}.xlsx`);
   showToast("Excel file downloaded.", "success");
+}
+
+function downloadEmployeeExpensePdf() {
+  if (!employeeExpenseCache.length) {
+    showToast("No expense entries to export yet.", "error");
+    return;
+  }
+  const sorted = [...employeeExpenseCache].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  let advance = 0, other = 0;
+  const rows = sorted.map(x => {
+    const amt = Number(x.amount) || 0;
+    if ((x.category || "").trim().toLowerCase() === "advance") advance += amt; else other += amt;
+    return [fmtDate(x.date), x.category || "", x.description || "", fmtMoney(amt)];
+  });
+  rows.push(["", "", "Advance Given", fmtMoney(advance)]);
+  rows.push(["", "", "Other Expenses", fmtMoney(other)]);
+  rows.push(["", "", "Total", fmtMoney(advance + other)]);
+  const safeName = (currentEmployeeName || "employee").replace(/\s+/g, "_");
+  downloadRowsAsPdf(
+    `Expense / Advance — ${currentEmployeeName || ""}`,
+    ["Date", "Category", "Description", "Amount"],
+    rows,
+    `Expense-${safeName}-${todayISO()}.pdf`,
+    "portrait"
+  );
 }

@@ -40,6 +40,7 @@ function renderHistory(list) {
       <td>${escapeHtml((inv.createdBy || "—").split("@")[0])}</td>
       <td>
         <div class="row-actions">
+          <button class="icon-btn" data-action="preview" title="Preview">👁</button>
           <button class="icon-btn" data-action="edit" title="Edit">✎</button>
           <button class="icon-btn" data-action="recreate" title="Recreate as new">⎘</button>
           <button class="icon-btn" data-action="download" title="Download PDF">⬇</button>
@@ -56,6 +57,10 @@ function renderHistory(list) {
 }
 
 function handleHistoryAction(action, inv) {
+  if (action === "preview") {
+    openPreview(inv);
+    return;
+  }
   if (action === "edit") {
     loadInvoiceIntoForm(inv, inv.id);
     switchView("invoiceView");
@@ -64,16 +69,14 @@ function handleHistoryAction(action, inv) {
   }
   if (action === "recreate") {
     loadInvoiceIntoForm(inv, null); // copy data, but as a fresh invoice
-    reserveNextInvoiceNumber().then(num => {
-      document.getElementById("f_invoiceNo").value = num;
-      document.getElementById("f_orderNo").value = num.replace("SRK", "");
-      document.getElementById("f_salesOrderNo").value = num.replace("SRK", "");
-      document.getElementById("f_invoiceDate").value = todayISO();
-      document.getElementById("f_orderDate").value = todayISO();
-      document.getElementById("f_salesOrderDate").value = todayISO();
-    });
+    document.getElementById("f_invoiceNo").value = "";
+    document.getElementById("f_orderNo").value = "";
+    document.getElementById("f_salesOrderNo").value = "";
+    document.getElementById("f_invoiceDate").value = todayISO();
+    document.getElementById("f_orderDate").value = todayISO();
+    document.getElementById("f_salesOrderDate").value = todayISO();
     switchView("invoiceView");
-    showToast(`Recreating from ${inv.invoiceNo} as a new invoice`, "success");
+    showToast(`Recreating from ${inv.invoiceNo} as a new invoice — enter a new invoice number`, "success");
     return;
   }
   if (action === "download") {

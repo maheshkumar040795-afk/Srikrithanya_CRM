@@ -125,7 +125,7 @@
           <div class="field-row">
             <div class="field">
               <label>Invoice No. (Ref. IRN)</label>
-              <input type="text" id="f_invoiceNo" readonly />
+              <input type="text" id="f_invoiceNo" placeholder="e.g. SRK001" />
             </div>
             <div class="field">
               <label>Invoice Date</label>
@@ -205,6 +205,29 @@
           <div class="field">
             <label>Buyer Phone</label>
             <input type="tel" id="f_buyerPhone" placeholder="91XXXXXXXXXX" />
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Delivery details</h3>
+              <div class="desc">Where the goods/services are being delivered, and the logistics used</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Delivery Address</label>
+            <textarea id="f_deliveryAddress" rows="2" placeholder="Street, Area, City – PIN (leave blank if same as buyer address)"></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Logistics Name</label>
+              <input type="text" id="f_logisticsName" placeholder="e.g. VRL Logistics" />
+            </div>
+            <div class="field">
+              <label>Delivery GST Number</label>
+              <input type="text" id="f_deliveryGstin" placeholder="33XXXXXXXXXXXZX" />
+            </div>
           </div>
         </div>
 
@@ -538,7 +561,7 @@
           <div class="field-row">
             <div class="field">
               <label>BOQ No.</label>
-              <input type="text" id="b_boqNo" readonly />
+              <input type="text" id="b_boqNo" placeholder="e.g. BOQ-001" />
             </div>
             <div class="field">
               <label>BOQ Date</label>
@@ -701,7 +724,7 @@
           <div class="field-row">
             <div class="field">
               <label>Challan No.</label>
-              <input type="text" id="dc_challanNo" readonly />
+              <input type="text" id="dc_challanNo" placeholder="e.g. DC-001" />
             </div>
             <div class="field">
               <label>Challan Type</label>
@@ -909,7 +932,7 @@
           <div class="field-row">
             <div class="field">
               <label>PV No.</label>
-              <input type="text" id="v_pvNo" readonly />
+              <input type="text" id="v_pvNo" placeholder="e.g. PV-001" />
             </div>
             <div class="field">
               <label>Date</label>
@@ -1057,6 +1080,10 @@
           <div class="search-bar">
             <input type="text" id="amcSearch" placeholder="Search by client name…" />
           </div>
+          <div class="action-bar" style="margin-top:0; margin-bottom:16px;">
+            <button class="btn btn-ghost" id="downloadAmcPdfBtn">⬇ Download PDF</button>
+            <button class="btn btn-ghost" id="downloadAmcExcelBtn">⬇ Download Excel</button>
+          </div>
           <div style="overflow-x:auto;">
             <table class="history-table" id="amcTable">
               <thead>
@@ -1138,6 +1165,10 @@
           </div>
           <div class="search-bar">
             <input type="text" id="employeeSearch" placeholder="Search by name or role…" />
+          </div>
+          <div class="action-bar" style="margin-top:0; margin-bottom:16px;">
+            <button class="btn btn-ghost" id="downloadEmployeesPdfBtn">⬇ Download PDF</button>
+            <button class="btn btn-ghost" id="downloadEmployeesExcelBtn">⬇ Download Excel</button>
           </div>
           <div style="overflow-x:auto;">
             <table class="history-table" id="employeesTable">
@@ -1228,6 +1259,10 @@
           <div class="search-bar">
             <input type="text" id="supplierSearch" placeholder="Search by item, category, or company…" />
             <button class="btn btn-ghost" id="refreshSupplierPricesBtn" type="button">Refresh</button>
+          </div>
+          <div class="action-bar" style="margin-top:0; margin-bottom:16px;">
+            <button class="btn btn-ghost" id="downloadSupplierPdfBtn">⬇ Download PDF</button>
+            <button class="btn btn-ghost" id="downloadSupplierExcelBtn">⬇ Download Excel</button>
           </div>
           <div class="field-row" style="margin-bottom:16px;">
             <div class="field">
@@ -1596,6 +1631,7 @@
 
       <div class="action-bar" style="margin-top:4px; margin-bottom:18px;">
         <button class="btn btn-primary" id="saveAmcFinanceBtn" style="width:auto;">Add Entry</button>
+        <button class="btn btn-ghost" id="downloadAmcFinancePdfBtn">Download PDF</button>
         <button class="btn btn-ghost" id="downloadAmcFinanceExcelBtn">Download Excel</button>
       </div>
 
@@ -1667,6 +1703,7 @@
       <div class="hint" style="margin:6px 0 4px;">One entry per date — marking the same date again updates it instead of duplicating.</div>
       <div class="action-bar" style="margin-top:4px; margin-bottom:18px;">
         <button class="btn btn-primary" id="saveEmployeeAttendanceBtn" style="width:auto;">Mark Attendance</button>
+        <button class="btn btn-ghost" id="downloadEmployeeAttendancePdfBtn">Download PDF</button>
         <button class="btn btn-ghost" id="downloadEmployeeAttendanceExcelBtn">Download Excel</button>
       </div>
 
@@ -1739,6 +1776,8 @@
 
       <div class="action-bar" style="margin-top:4px; margin-bottom:18px;">
         <button class="btn btn-primary" id="saveEmployeeExpenseBtn" style="width:auto;">Add Entry</button>
+        <button class="btn btn-ghost" id="cancelEmployeeExpenseEditBtn" style="display:none;">Cancel edit</button>
+        <button class="btn btn-ghost" id="downloadEmployeeExpensePdfBtn">Download PDF</button>
         <button class="btn btn-ghost" id="downloadEmployeeExpenseExcelBtn">Download Excel</button>
       </div>
 

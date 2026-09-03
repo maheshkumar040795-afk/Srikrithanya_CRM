@@ -134,7 +134,7 @@ async function reserveNextBoqNumber() {
 function resetBoqForm(newNumber) {
   currentBoqId = null;
   boqItemRows = [];
-  document.getElementById("b_boqNo").value = newNumber || "Generating…";
+  document.getElementById("b_boqNo").value = newNumber || "";
   document.getElementById("b_boqDate").value = todayISO();
   document.getElementById("b_projectName").value = "";
   document.getElementById("b_projectLocation").value = "";
@@ -150,16 +150,9 @@ function resetBoqForm(newNumber) {
   addBoqItemRow();
 }
 
-async function startNewBoq() {
+function startNewBoq() {
   resetBoqForm();
-  try {
-    const num = await reserveNextBoqNumber();
-    document.getElementById("b_boqNo").value = num;
-  } catch (err) {
-    console.error(err);
-    document.getElementById("b_boqNo").value = "BOQ-" + Date.now().toString().slice(-4);
-    showToast("Couldn't reach the database for numbering — check your Firebase setup.", "error");
-  }
+  document.getElementById("b_boqNo").focus();
 }
 
 function collectBoqFormData() {
@@ -219,6 +212,7 @@ function loadBoqIntoForm(data, docId) {
 
 async function saveBoq() {
   const data = collectBoqFormData();
+  if (!data.boqNo.trim()) { showToast("Enter a BOQ number before saving.", "error"); return; }
   if (!data.projectName.trim() && !data.clientName.trim()) {
     showToast("Add a project name or client name before saving.", "error");
     return;
@@ -298,6 +292,7 @@ function renderBoqList(list) {
       <td>${escapeHtml(b.createdBy || "—")}</td>
       <td>
         <div class="row-actions">
+          <button class="icon-btn" data-action="preview" title="Preview">👁</button>
           <button class="icon-btn" data-action="edit" title="Edit">✎</button>
           <button class="icon-btn" data-action="download" title="Download PDF">⬇</button>
           <button class="icon-btn" data-action="delete" title="Delete">🗑</button>
@@ -312,6 +307,10 @@ function renderBoqList(list) {
 }
 
 function handleBoqListAction(action, b) {
+  if (action === "preview") {
+    openBoqPreview(b);
+    return;
+  }
   if (action === "edit") {
     loadBoqIntoForm(b, b.id);
     showToast(`Editing ${b.boqNo}`, "success");
@@ -503,8 +502,8 @@ function renderBoqHTML(data) {
 
 // ---------------- Preview ----------------
 
-function openBoqPreview() {
-  const data = collectBoqFormData();
+function openBoqPreview(data) {
+  data = data || collectBoqFormData();
   document.getElementById("boqSheetPreview").innerHTML = renderBoqHTML(data);
   document.getElementById("boqPreviewModal").classList.add("open");
 }

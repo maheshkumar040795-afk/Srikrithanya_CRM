@@ -150,7 +150,7 @@ async function reserveNextInvoiceNumber() {
 function resetInvoiceForm(newNumber) {
   currentInvoiceId = null;
   itemRows = [];
-  document.getElementById("f_invoiceNo").value = newNumber || "Generating…";
+  document.getElementById("f_invoiceNo").value = newNumber || "";
   document.getElementById("f_invoiceDate").value = todayISO();
   document.getElementById("f_orderNo").value = "";
   document.getElementById("f_orderDate").value = todayISO();
@@ -165,6 +165,9 @@ function resetInvoiceForm(newNumber) {
   document.getElementById("f_buyerGstin").value = "";
   document.getElementById("f_buyerEmail").value = "";
   document.getElementById("f_buyerPhone").value = "";
+  document.getElementById("f_deliveryAddress").value = "";
+  document.getElementById("f_logisticsName").value = "";
+  document.getElementById("f_deliveryGstin").value = "";
   document.getElementById("f_gstType").value = "CGST_SGST";
   document.getElementById("f_cgstPercent").value = 9;
   document.getElementById("f_sgstPercent").value = 9;
@@ -173,18 +176,9 @@ function resetInvoiceForm(newNumber) {
   addItemRow();
 }
 
-async function startNewInvoice() {
+function startNewInvoice() {
   resetInvoiceForm();
-  try {
-    const num = await reserveNextInvoiceNumber();
-    document.getElementById("f_invoiceNo").value = num;
-    document.getElementById("f_orderNo").value = num.replace("SRK", "");
-    document.getElementById("f_salesOrderNo").value = num.replace("SRK", "");
-  } catch (err) {
-    console.error(err);
-    document.getElementById("f_invoiceNo").value = "SRK" + Date.now().toString().slice(-4);
-    showToast("Couldn't reach the database for numbering — check your Firebase setup.", "error");
-  }
+  document.getElementById("f_invoiceNo").focus();
 }
 
 function collectFormData() {
@@ -205,6 +199,9 @@ function collectFormData() {
     buyerGstin: document.getElementById("f_buyerGstin").value,
     buyerEmail: document.getElementById("f_buyerEmail").value,
     buyerPhone: document.getElementById("f_buyerPhone").value,
+    deliveryAddress: document.getElementById("f_deliveryAddress").value,
+    logisticsName: document.getElementById("f_logisticsName").value,
+    deliveryGstin: document.getElementById("f_deliveryGstin").value,
     items: itemRows.map(r => ({
       description: r.description, hsn: r.hsn, qty: Number(r.qty) || 0, rate: Number(r.rate) || 0,
       amount: (Number(r.qty) || 0) * (Number(r.rate) || 0)
@@ -239,6 +236,9 @@ function loadInvoiceIntoForm(data, docId) {
   document.getElementById("f_buyerGstin").value = data.buyerGstin || "";
   document.getElementById("f_buyerEmail").value = data.buyerEmail || "";
   document.getElementById("f_buyerPhone").value = data.buyerPhone || "";
+  document.getElementById("f_deliveryAddress").value = data.deliveryAddress || "";
+  document.getElementById("f_logisticsName").value = data.logisticsName || "";
+  document.getElementById("f_deliveryGstin").value = data.deliveryGstin || "";
   // Older invoices saved before GST type existed always used a fixed 9% + 9% CGST/SGST split.
   document.getElementById("f_gstType").value = data.gstType || "CGST_SGST";
   document.getElementById("f_cgstPercent").value = data.cgstPercent != null ? data.cgstPercent : 9;
@@ -252,6 +252,7 @@ function loadInvoiceIntoForm(data, docId) {
 
 async function saveInvoice() {
   const data = collectFormData();
+  if (!data.invoiceNo.trim()) { showToast("Enter an invoice number before saving.", "error"); return; }
   if (!data.buyerName.trim()) { showToast("Add a buyer name before saving.", "error"); return; }
   if (data.items.every(i => !i.description.trim())) { showToast("Add at least one item.", "error"); return; }
 
@@ -363,6 +364,18 @@ function renderInvoiceHTML(data) {
           <div style="margin-top:6px;"><span class="lbl">Invoice Date:</span> ${fmtDate(data.invoiceDate)}</div>
         </td>
       </tr>
+      ${(data.deliveryAddress || data.logisticsName || data.deliveryGstin) ? `
+      <tr>
+        <td>
+          <div class="lbl">DELIVERY ADDRESS</div>
+          <div>${escapeHtml(data.deliveryAddress || "Same as buyer address")}</div>
+          <div><strong>GSTIN/UIN:</strong> ${escapeHtml(data.deliveryGstin || "—")}</div>
+        </td>
+        <td>
+          <div><span class="lbl">Logistics Name:</span> ${escapeHtml(data.logisticsName || "—")}</div>
+        </td>
+      </tr>
+      ` : ""}
     </table>
 
     <table class="items-print">
@@ -514,8 +527,8 @@ function wireBuyerAutocomplete() {
 }
 
 // ---------------- Preview / Print ----------------
-function openPreview() {
-  const data = collectFormData();
+function openPreview(data) {
+  data = data || collectFormData();
   document.getElementById("invoiceSheetPreview").innerHTML = renderInvoiceHTML(data);
   document.getElementById("previewModal").classList.add("open");
 }

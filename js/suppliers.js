@@ -125,6 +125,37 @@ function wireSupplierSearch() {
   document.getElementById("supplierFilterCompany").addEventListener("change", applySupplierFilters);
 }
 
+// ---------------- Export: Excel + PDF ----------------
+
+function supplierExportRows() {
+  const search = document.getElementById("supplierSearch");
+  const list = filterSupplierPrices(search ? search.value.trim() : "");
+  const sorted = [...list].sort((a, b) => String(a.Item || "").localeCompare(String(b.Item || "")) || (Number(a.Rate) || 0) - (Number(b.Rate) || 0));
+  return sorted.map(r => [
+    r.Category || "", r.Item || "", r.Company || "", r.Make || "", r.Unit || "", Number(r.Rate) || 0,
+    r.UpdatedAt ? new Date(r.UpdatedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"
+  ]);
+}
+
+function downloadSupplierPricesExcel() {
+  downloadRowsAsExcel(
+    "Supplier Prices",
+    ["Category", "Item", "Company", "Make", "Unit", "Rate (₹)", "Updated"],
+    supplierExportRows(),
+    `Supplier-Prices-${todayISO()}.xlsx`,
+    [20, 28, 20, 16, 10, 12, 14]
+  );
+}
+
+function downloadSupplierPricesPdf() {
+  downloadRowsAsPdf(
+    "Supplier Price Comparison",
+    ["Category", "Item", "Company", "Make", "Unit", "Rate (₹)", "Updated"],
+    supplierExportRows(),
+    `Supplier-Prices-${todayISO()}.pdf`
+  );
+}
+
 // ---------------- Table ----------------
 
 function renderSupplierPricesTable(list) {
