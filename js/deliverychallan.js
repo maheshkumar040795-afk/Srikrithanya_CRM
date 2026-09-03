@@ -525,8 +525,11 @@ function renderChallanHTML(data) {
 
 // ---------------- Preview ----------------
 
+let currentChallanPreviewData = null;
+
 function openChallanPreview(data) {
   data = data || collectChallanFormData();
+  currentChallanPreviewData = data;
   document.getElementById("challanSheetPreview").innerHTML = renderChallanHTML(data);
   document.getElementById("challanPreviewModal").classList.add("open");
 }

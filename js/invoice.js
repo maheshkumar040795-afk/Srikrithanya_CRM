@@ -527,8 +527,11 @@ function wireBuyerAutocomplete() {
 }
 
 // ---------------- Preview / Print ----------------
+let currentPreviewData = null; // whichever invoice's data is currently shown in the preview modal
+
 function openPreview(data) {
   data = data || collectFormData();
+  currentPreviewData = data;
   document.getElementById("invoiceSheetPreview").innerHTML = renderInvoiceHTML(data);
   document.getElementById("previewModal").classList.add("open");
 }

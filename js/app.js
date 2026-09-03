@@ -117,7 +117,7 @@ function closeSidebar() {
   wireInvoiceGstTypeControls();
 
   // Preview modal
-  document.getElementById("downloadPdfBtn").addEventListener("click", () => downloadInvoicePdf());
+  document.getElementById("downloadPdfBtn").addEventListener("click", () => downloadInvoicePdf(currentPreviewData));
   document.getElementById("printFromPreviewBtn").addEventListener("click", () => {
     closeModal("previewModal");
     printInvoice();
@@ -192,7 +192,7 @@ function closeSidebar() {
   document.getElementById("addBoqRowBtn").addEventListener("click", () => addBoqItemRow());
   document.getElementById("saveBoqBtn").addEventListener("click", saveBoq);
   document.getElementById("previewBoqBtn").addEventListener("click", () => openBoqPreview());
-  document.getElementById("downloadBoqPdfFromPreviewBtn").addEventListener("click", () => downloadBoqPdf());
+  document.getElementById("downloadBoqPdfFromPreviewBtn").addEventListener("click", () => downloadBoqPdf(currentBoqPreviewData));
   document.getElementById("newBoqBtn").addEventListener("click", startNewBoq);
   document.getElementById("downloadBoqPdfBtn").addEventListener("click", () => downloadBoqPdf());
   wireBoqGstTypeControls();
@@ -204,7 +204,7 @@ function closeSidebar() {
   document.getElementById("addChallanRowBtn").addEventListener("click", () => addChallanItemRow());
   document.getElementById("saveChallanBtn").addEventListener("click", saveChallan);
   document.getElementById("previewChallanBtn").addEventListener("click", () => openChallanPreview());
-  document.getElementById("downloadChallanPdfFromPreviewBtn").addEventListener("click", () => downloadChallanPdf());
+  document.getElementById("downloadChallanPdfFromPreviewBtn").addEventListener("click", () => downloadChallanPdf(currentChallanPreviewData));
   document.getElementById("newChallanBtn").addEventListener("click", startNewChallan);
   document.getElementById("downloadChallanPdfBtn").addEventListener("click", () => downloadChallanPdf());
   wireChallanGstTypeControls();
@@ -215,7 +215,7 @@ function closeSidebar() {
   // Voucher
   document.getElementById("saveVoucherBtn").addEventListener("click", saveVoucher);
   document.getElementById("previewVoucherBtn").addEventListener("click", () => openVoucherPreview());
-  document.getElementById("downloadVoucherPdfFromPreviewBtn").addEventListener("click", () => downloadVoucherPdf());
+  document.getElementById("downloadVoucherPdfFromPreviewBtn").addEventListener("click", () => downloadVoucherPdf(currentVoucherPreviewData));
   document.getElementById("newVoucherBtn").addEventListener("click", startNewVoucher);
   document.getElementById("downloadVoucherPdfBtn").addEventListener("click", () => downloadVoucherPdf());
   wireVoucherModeControls();

@@ -290,8 +290,11 @@ function renderVoucherHTML(data) {
 
 // ---------------- Preview ----------------
 
+let currentVoucherPreviewData = null;
+
 function openVoucherPreview(data) {
   data = data || collectVoucherFormData();
+  currentVoucherPreviewData = data;
   document.getElementById("voucherSheetPreview").innerHTML = renderVoucherHTML(data);
   document.getElementById("voucherPreviewModal").classList.add("open");
 }

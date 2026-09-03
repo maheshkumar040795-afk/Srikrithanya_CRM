@@ -502,8 +502,11 @@ function renderBoqHTML(data) {
 
 // ---------------- Preview ----------------
 
+let currentBoqPreviewData = null;
+
 function openBoqPreview(data) {
   data = data || collectBoqFormData();
+  currentBoqPreviewData = data;
   document.getElementById("boqSheetPreview").innerHTML = renderBoqHTML(data);
   document.getElementById("boqPreviewModal").classList.add("open");
 }
