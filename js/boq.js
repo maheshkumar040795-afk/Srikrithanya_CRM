@@ -490,7 +490,10 @@ function renderBoqHTML(data) {
           <div class="small-muted">Rates exclude GST unless stated otherwise; valid for 30 days from the BOQ date.</div>
         </td>
         <td class="sig-cell">
-          <img src="assets/signature.jpg" alt="Authorized signatory" />
+          <div class="sig-stamp-wrap">
+            <img src="assets/company-seal.png" class="sig-seal" alt="Company seal" />
+            <img src="assets/director-signature-block.png" class="sig-block" alt="Authorized signatory" />
+          </div>
           <div class="small-muted">Authorized Signatory</div>
         </td>
       </tr>

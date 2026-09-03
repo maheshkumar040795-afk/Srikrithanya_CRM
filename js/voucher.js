@@ -278,7 +278,10 @@ function renderVoucherHTML(data) {
           <div class="small-muted">Received the above amount in good order.</div>
         </td>
         <td class="sig-cell">
-          <img src="assets/signature.jpg" alt="Authorized signatory" />
+          <div class="sig-stamp-wrap">
+            <img src="assets/company-seal.png" class="sig-seal" alt="Company seal" />
+            <img src="assets/director-signature-block.png" class="sig-block" alt="Authorized signatory" />
+          </div>
           <div class="small-muted">Manager / Accountant</div>
         </td>
       </tr>

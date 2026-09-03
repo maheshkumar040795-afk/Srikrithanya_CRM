@@ -52,6 +52,7 @@ function renderClientsTable(list) {
     const bank = [c.bankName, c.bankAccount].filter(Boolean).join(" · ");
     const tr = document.createElement("tr");
     tr.innerHTML = `
+      <td>${escapeHtml(c.clientId || "—")}</td>
       <td><strong>${escapeHtml(c.name)}</strong></td>
       <td>${escapeHtml(c.address || "—")}</td>
       <td>${escapeHtml(c.email || "—")}</td>
@@ -96,6 +97,7 @@ function handleClientAction(action, client) {
 
 function loadClientIntoForm(client) {
   editingClientId = client.id;
+  document.getElementById("c_clientId").value = client.clientId || "";
   document.getElementById("c_name").value = client.name || "";
   document.getElementById("c_address").value = client.address || "";
   document.getElementById("c_email").value = client.email || "";
@@ -111,7 +113,7 @@ function loadClientIntoForm(client) {
 
 function resetClientForm() {
   editingClientId = null;
-  ["c_name", "c_address", "c_email", "c_contact", "c_bankName", "c_bankAccount", "c_ifsc"].forEach(id => {
+  ["c_clientId", "c_name", "c_address", "c_email", "c_contact", "c_bankName", "c_bankAccount", "c_ifsc"].forEach(id => {
     document.getElementById(id).value = "";
   });
   document.getElementById("clientFormTitle").textContent = "Onboard a client";
@@ -124,6 +126,7 @@ async function saveClient() {
   if (!name) { showToast("Client name is required.", "error"); return; }
 
   const data = {
+    clientId: document.getElementById("c_clientId").value.trim(),
     name,
     address: document.getElementById("c_address").value.trim(),
     email: document.getElementById("c_email").value.trim(),
@@ -169,6 +172,6 @@ function wireClientSearch() {
   const input = document.getElementById("clientSearch");
   input.addEventListener("input", () => {
     const q = input.value.trim().toLowerCase();
-    renderClientsTable(q ? clientsCache.filter(c => (c.name || "").toLowerCase().includes(q)) : clientsCache);
+    renderClientsTable(q ? clientsCache.filter(c => (c.name || "").toLowerCase().includes(q) || (c.clientId || "").toLowerCase().includes(q)) : clientsCache);
   });
 }

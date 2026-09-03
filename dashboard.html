@@ -314,9 +314,15 @@
               <div class="desc">Save their details once — pick them by name next time you create an invoice.</div>
             </div>
           </div>
-          <div class="field">
-            <label>Client Name</label>
-            <input type="text" id="c_name" placeholder="M/s. Client Company Pvt Ltd" />
+          <div class="field-row">
+            <div class="field">
+              <label>Client ID</label>
+              <input type="text" id="c_clientId" placeholder="e.g. CLI-001" />
+            </div>
+            <div class="field">
+              <label>Client Name</label>
+              <input type="text" id="c_name" placeholder="M/s. Client Company Pvt Ltd" />
+            </div>
           </div>
           <div class="field">
             <label>Client Address</label>
@@ -360,12 +366,13 @@
             </div>
           </div>
           <div class="search-bar">
-            <input type="text" id="clientSearch" placeholder="Search by client name…" />
+            <input type="text" id="clientSearch" placeholder="Search by client name or client ID…" />
           </div>
           <div style="overflow-x:auto;">
             <table class="history-table" id="clientsTable">
               <thead>
                 <tr>
+                  <th>Client ID</th>
                   <th>Client Name</th>
                   <th>Address</th>
                   <th>Email</th>
