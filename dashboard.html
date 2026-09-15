@@ -314,6 +314,8 @@
                   <th>Buyer</th>
                   <th>Date</th>
                   <th>Amount</th>
+                  <th>Received</th>
+                  <th>Pending</th>
                   <th>Created by</th>
                   <th>Actions</th>
                 </tr>
@@ -1644,6 +1646,64 @@
   </div>
 </div>
 
+<!-- ================= Invoice Payment Modal ================= -->
+<div class="modal-overlay" id="invoicePaymentModal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3 id="invoicePaymentModalTitle">Payment</h3>
+      <button class="modal-close" data-close="invoicePaymentModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fin-summary-row">
+        <div class="fin-summary-card net">
+          <div class="fin-summary-label">Invoice Total</div>
+          <div class="fin-summary-value" id="invPay_totalAmount">₹0.00</div>
+        </div>
+        <div class="fin-summary-card income">
+          <div class="fin-summary-label">Amount Received</div>
+          <div class="fin-summary-value" id="invPaySummaryReceived">₹0.00</div>
+        </div>
+        <div class="fin-summary-card expense" id="invPaySummaryPendingCard">
+          <div class="fin-summary-label">Pending Amount</div>
+          <div class="fin-summary-value" id="invPaySummaryPending">₹0.00</div>
+        </div>
+      </div>
+
+      <div class="field-row" style="margin-top:18px;">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="invPay_date" />
+        </div>
+        <div class="field">
+          <label>Amount Received (₹)</label>
+          <input type="number" id="invPay_amount" min="0" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+
+      <div class="action-bar" style="margin-top:4px; margin-bottom:18px;">
+        <button class="btn btn-primary" id="saveInvoicePaymentBtn" style="width:auto;">Add Payment</button>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="history-table" id="invoicePaymentTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="invoicePaymentBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="invoicePaymentEmpty" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <div>No payments recorded yet for this invoice.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ================= Employee Attendance Modal ================= -->
 <div class="modal-overlay" id="employeeAttendanceModal">
   <div class="modal-box wide">
@@ -1887,6 +1947,7 @@
 <script src="js/idcards.js"></script>
 <script src="js/amc.js"></script>
 <script src="js/amc-finance.js"></script>
+<script src="js/invoice-payments.js"></script>
 <script src="js/employees.js"></script>
 <script src="js/suppliers.js"></script>
 <script src="js/history.js"></script>

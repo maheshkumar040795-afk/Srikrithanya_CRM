@@ -10,6 +10,7 @@ async function loadHistory() {
   try {
     const snap = await db.collection("invoices").orderBy("createdAt", "desc").limit(200).get();
     allInvoices = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    await loadInvoicePaymentTotals(); // Received / Pending per invoice, for the two extra columns
     renderHistory(allInvoices);
   } catch (err) {
     console.error(err);
@@ -31,16 +32,29 @@ function renderHistory(list) {
   empty.style.display = "none";
 
   list.forEach(inv => {
+    const total = Number(inv.netTotal) || 0;
+    const received = invoicePaymentTotalsMap[inv.id] || 0;
+    const pending = total - received;
+    const receivedCell = received > 0
+      ? `<span class="amt-income">${fmtMoney(received)}</span>`
+      : `—`;
+    const pendingCell = pending <= 0
+      ? `<span class="pill status-ok">Paid</span>`
+      : `<span class="amt-expense">${fmtMoney(pending)}</span>`;
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><strong>${escapeHtml(inv.invoiceNo)}</strong></td>
       <td>${escapeHtml(inv.buyerName || "—")}</td>
       <td>${fmtDate(inv.invoiceDate)}</td>
       <td>${fmtMoney(inv.netTotal)}</td>
+      <td>${receivedCell}</td>
+      <td>${pendingCell}</td>
       <td>${escapeHtml((inv.createdBy || "—").split("@")[0])}</td>
       <td>
         <div class="row-actions">
           <button class="icon-btn" data-action="preview" title="Preview">👁</button>
+          <button class="icon-btn" data-action="payment" title="Record Payment">₹</button>
           <button class="icon-btn" data-action="edit" title="Edit">✎</button>
           <button class="icon-btn" data-action="recreate" title="Recreate as new">⎘</button>
           <button class="icon-btn" data-action="download" title="Download PDF">⬇</button>
@@ -59,6 +73,10 @@ function renderHistory(list) {
 function handleHistoryAction(action, inv) {
   if (action === "preview") {
     openPreview(inv);
+    return;
+  }
+  if (action === "payment") {
+    openInvoicePayment(inv);
     return;
   }
   if (action === "edit") {

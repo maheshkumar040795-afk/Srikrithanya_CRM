@@ -227,6 +227,9 @@ function closeSidebar() {
   document.getElementById("addStaffBtn").addEventListener("click", addStaffAccount);
   wireStaffCreatedPanel();
 
+  // Invoice Payments (Received / Pending)
+  document.getElementById("saveInvoicePaymentBtn").addEventListener("click", saveInvoicePaymentEntry);
+
   // History search
   wireHistorySearch();
 
