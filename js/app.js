@@ -18,7 +18,7 @@ function switchView(viewId) {
     historyView: ["Invoice History", "All invoices created so far"],
     clientsView: ["Clients", "Onboard clients and manage their saved details"],
     idCardsView: ["ID Cards", "Generate and manage employee ID cards"],
-    boqView: ["BOQ", "Bill of quantities / quotations, with GST and PDF export"],
+    boqView: ["BOQ / Quotation", "Bill of quantities and quotations, with GST and PDF export"],
     challanView: ["Delivery Challan", "Dispatch notes with items, GST, and PDF export"],
     voucherView: ["Voucher", "Cash / cheque payment vouchers, with PDF export"],
     amcView: ["AMC", "Annual maintenance contracts, by renewal cycle"],
@@ -187,6 +187,7 @@ function closeSidebar() {
   document.getElementById("previewBoqBtn").addEventListener("click", () => openBoqPreview());
   document.getElementById("newBoqBtn").addEventListener("click", startNewBoq);
   document.getElementById("downloadBoqPdfBtn").addEventListener("click", () => downloadBoqPdf());
+  wireBoqDocTypeControl();
   wireBoqGstTypeControls();
   wireBoqClientAutocomplete();
   wireBoqSearch();

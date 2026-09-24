@@ -117,6 +117,33 @@ function recalcBoqTotals() {
   return { taxable, gstType, igstPercent, igst, cgstPercent, cgst, sgstPercent, sgst, total };
 }
 
+// ---------------- Document type (BOQ / Quotation) ----------------
+// Same form, same Firestore collection — docType only changes the wording
+// on the screen and on the printed/PDF document. Older records have no
+// docType and are treated as "BOQ".
+
+function getBoqDocMeta(docType) {
+  if (docType === "QUOTATION") {
+    return { type: "QUOTATION", short: "Quotation", title: "QUOTATION", refLabel: "QUOTATION REF", noLabel: "Quotation No", dateWord: "quotation" };
+  }
+  return { type: "BOQ", short: "BOQ", title: "BILL OF QUANTITIES (BOQ)", refLabel: "BOQ REF", noLabel: "BOQ No", dateWord: "BOQ" };
+}
+
+function updateBoqDocTypeUI() {
+  const meta = getBoqDocMeta(document.getElementById("b_docType").value);
+  document.getElementById("b_detailsHeading").textContent = meta.short + " details";
+  document.getElementById("b_noLabel").textContent = meta.noLabel + ".";
+  document.getElementById("b_dateLabel").textContent = meta.short + " Date";
+  document.getElementById("b_boqNo").placeholder = meta.type === "QUOTATION" ? "e.g. QTN-001" : "e.g. BOQ-001";
+  document.getElementById("saveBoqBtn").textContent = "Save " + meta.short;
+  document.getElementById("newBoqBtn").textContent = "New " + meta.short;
+}
+
+function wireBoqDocTypeControl() {
+  document.getElementById("b_docType").addEventListener("change", updateBoqDocTypeUI);
+  updateBoqDocTypeUI();
+}
+
 // ---------------- BOQ numbering ----------------
 
 async function reserveNextBoqNumber() {
@@ -134,6 +161,8 @@ async function reserveNextBoqNumber() {
 function resetBoqForm(newNumber) {
   currentBoqId = null;
   boqItemRows = [];
+  // Keep whichever document type the user last picked when starting a new one
+  updateBoqDocTypeUI();
   document.getElementById("b_boqNo").value = newNumber || "";
   document.getElementById("b_boqDate").value = todayISO();
   document.getElementById("b_projectName").value = "";
@@ -158,6 +187,7 @@ function startNewBoq() {
 function collectBoqFormData() {
   const totals = recalcBoqTotals();
   return {
+    docType: document.getElementById("b_docType").value || "BOQ",
     boqNo: document.getElementById("b_boqNo").value,
     boqDate: document.getElementById("b_boqDate").value,
     projectName: document.getElementById("b_projectName").value,
@@ -185,6 +215,8 @@ function collectBoqFormData() {
 
 function loadBoqIntoForm(data, docId) {
   currentBoqId = docId || null;
+  document.getElementById("b_docType").value = data.docType === "QUOTATION" ? "QUOTATION" : "BOQ";
+  updateBoqDocTypeUI();
   document.getElementById("b_boqNo").value = data.boqNo || "";
   document.getElementById("b_boqDate").value = data.boqDate || todayISO();
   document.getElementById("b_projectName").value = data.projectName || "";
@@ -212,7 +244,8 @@ function loadBoqIntoForm(data, docId) {
 
 async function saveBoq() {
   const data = collectBoqFormData();
-  if (!data.boqNo.trim()) { showToast("Enter a BOQ number before saving.", "error"); return; }
+  const meta = getBoqDocMeta(data.docType);
+  if (!data.boqNo.trim()) { showToast(`Enter a ${meta.short} number before saving.`, "error"); return; }
   if (!data.projectName.trim() && !data.clientName.trim()) {
     showToast("Add a project name or client name before saving.", "error");
     return;
@@ -223,7 +256,7 @@ async function saveBoq() {
   }
 
   const btn = document.getElementById("saveBoqBtn");
-  const original = btn.textContent;
+  const original = "Save " + meta.short;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>';
 
@@ -234,14 +267,14 @@ async function saveBoq() {
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedBy: user ? user.email : null
       }), { merge: true });
-      showToast("BOQ updated.", "success");
+      showToast(`${meta.short} updated.`, "success");
     } else {
       const docRef = await db.collection("boqs").add(Object.assign({}, data, {
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         createdBy: user ? user.email : null
       }));
       currentBoqId = docRef.id;
-      showToast("BOQ saved.", "success");
+      showToast(`${meta.short} saved.`, "success");
     }
     loadBoqList();
   } catch (err) {
@@ -268,7 +301,7 @@ async function loadBoqList() {
     empty.querySelector("div").textContent = friendlyFirestoreError(err, "load BOQs");
     return;
   }
-  empty.querySelector("div").textContent = "No BOQs saved yet.";
+  empty.querySelector("div").textContent = "No BOQs or quotations saved yet.";
   renderBoqList(allBoqs);
 }
 
@@ -282,9 +315,11 @@ function renderBoqList(list) {
   }
   empty.style.display = "none";
   list.forEach(b => {
+    const meta = getBoqDocMeta(b.docType);
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><strong>${escapeHtml(b.boqNo)}</strong></td>
+      <td><span class="pill ${meta.type === "QUOTATION" ? "doc-quotation" : "doc-boq"}">${meta.short}</span></td>
       <td>${escapeHtml(b.projectName || "—")}</td>
       <td>${escapeHtml(b.clientName || "—")}</td>
       <td>${fmtDate(b.boqDate)}</td>
@@ -313,7 +348,7 @@ function handleBoqListAction(action, b) {
   }
   if (action === "edit") {
     loadBoqIntoForm(b, b.id);
-    showToast(`Editing ${b.boqNo}`, "success");
+    showToast(`Editing ${getBoqDocMeta(b.docType).short} ${b.boqNo}`, "success");
     return;
   }
   if (action === "download") {
@@ -321,9 +356,10 @@ function handleBoqListAction(action, b) {
     return;
   }
   if (action === "delete") {
-    if (!confirm(`Delete BOQ ${b.boqNo}? This can't be undone.`)) return;
+    const shortName = getBoqDocMeta(b.docType).short;
+    if (!confirm(`Delete ${shortName} ${b.boqNo}? This can't be undone.`)) return;
     db.collection("boqs").doc(b.id).delete().then(() => {
-      showToast("BOQ deleted.", "success");
+      showToast(`${shortName} deleted.`, "success");
       loadBoqList();
     }).catch(err => {
       console.error(err);
@@ -338,6 +374,7 @@ function wireBoqSearch() {
     if (!q) { renderBoqList(allBoqs); return; }
     renderBoqList(allBoqs.filter(b =>
       (b.boqNo || "").toLowerCase().includes(q) ||
+      getBoqDocMeta(b.docType).short.toLowerCase().includes(q) ||
       (b.projectName || "").toLowerCase().includes(q) ||
       (b.clientName || "").toLowerCase().includes(q)
     ));
@@ -413,6 +450,7 @@ function renderBoqGstRowsHtml(data) {
 }
 
 function renderBoqHTML(data) {
+  const meta = getBoqDocMeta(data.docType);
   const itemsHtml = (data.items || []).map((it, idx) => `
     <tr>
       <td class="center">${idx + 1}</td>
@@ -425,7 +463,7 @@ function renderBoqHTML(data) {
   `).join("");
 
   return `
-    <div class="inv-title">BILL OF QUANTITIES (BOQ)</div>
+    <div class="inv-title">${meta.title}</div>
     <table class="inv-head-table">
       <tr>
         <td style="width:70px;"><img src="assets/logo.png" alt="logo" /></td>
@@ -441,8 +479,8 @@ function renderBoqHTML(data) {
     <table class="inv-meta-table">
       <tr>
         <td>
-          <div class="lbl">BOQ / QUOTATION REF</div>
-          <div><span class="lbl">BOQ No:</span> ${escapeHtml(data.boqNo)}</div>
+          <div class="lbl">${meta.refLabel}</div>
+          <div><span class="lbl">${meta.noLabel}:</span> ${escapeHtml(data.boqNo)}</div>
           <div><span class="lbl">Date:</span> ${fmtDate(data.boqDate)}</div>
           <div><span class="lbl">Project Name:</span> ${escapeHtml(data.projectName || "—")}</div>
           <div><span class="lbl">Project Location:</span> ${escapeHtml(data.projectLocation || "—")}</div>
@@ -486,7 +524,7 @@ function renderBoqHTML(data) {
           <div><strong>Account No:</strong> ${BANK.accountNo}</div>
           <div><strong>Branch:</strong> ${BANK.branch}</div>
           <div><strong>IFSC Code:</strong> ${BANK.ifsc}</div>
-          <div class="small-muted">Rates exclude GST unless stated otherwise; valid for 30 days from the BOQ date.</div>
+          <div class="small-muted">Rates exclude GST unless stated otherwise; valid for 30 days from the ${meta.dateWord} date.</div>
         </td>
         <td class="sig-cell">
           <div class="sig-stamp-wrap">
@@ -507,6 +545,7 @@ let currentBoqPreviewData = null;
 function openBoqPreview(data) {
   data = data || collectBoqFormData();
   currentBoqPreviewData = data;
+  document.getElementById("boqPreviewTitle").textContent = getBoqDocMeta(data.docType).short + " preview";
   document.getElementById("boqSheetPreview").innerHTML = renderBoqHTML(data);
   document.getElementById("boqPreviewModal").classList.add("open");
 }
@@ -523,7 +562,7 @@ async function buildBoqPdfFile(data) {
   await waitForImages(sheet);
   void sheet.offsetHeight; // force layout flush before html2canvas, same fix as the invoice sheet
   const blob = await html2pdf().set(PDF_OPTS).from(sheet).outputPdf("blob");
-  const filename = (data.boqNo || "BOQ") + ".pdf";
+  const filename = (data.boqNo || getBoqDocMeta(data.docType).short) + ".pdf";
   return { blob, filename, data };
 }
 

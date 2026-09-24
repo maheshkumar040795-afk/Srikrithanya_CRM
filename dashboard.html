@@ -55,7 +55,7 @@
     </button>
     <button class="nav-item" data-view="boqView">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6l1 3h3a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3l1-3z"/><path d="M8 12h8M8 16h5"/></svg>
-      BOQ
+      BOQ / Quotation
     </button>
     <button class="nav-item" data-view="challanView">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3H5a2 2 0 0 0-2 2v16l4-2 3 2 3-2 3 2 4-2V8z"/><path d="M14 3v5h5"/><path d="M8 13h6M8 17h4"/></svg>
@@ -556,17 +556,24 @@
         <div class="panel">
           <div class="panel-head">
             <div>
-              <h3>BOQ details</h3>
-              <div class="desc">BOQ number is auto-generated; project details identify what this quotation covers.</div>
+              <h3 id="b_detailsHeading">BOQ details</h3>
+              <div class="desc">Choose whether this document prints as a BOQ or a Quotation; project details identify what it covers.</div>
             </div>
+          </div>
+          <div class="field" style="max-width:260px;">
+            <label>Document Type</label>
+            <select id="b_docType">
+              <option value="BOQ">BOQ (Bill of Quantities)</option>
+              <option value="QUOTATION">Quotation</option>
+            </select>
           </div>
           <div class="field-row">
             <div class="field">
-              <label>BOQ No.</label>
+              <label id="b_noLabel">BOQ No.</label>
               <input type="text" id="b_boqNo" placeholder="e.g. BOQ-001" />
             </div>
             <div class="field">
-              <label>BOQ Date</label>
+              <label id="b_dateLabel">BOQ Date</label>
               <input type="date" id="b_boqDate" />
             </div>
           </div>
@@ -683,18 +690,19 @@
         <div class="panel">
           <div class="panel-head">
             <div>
-              <h3>Saved BOQs</h3>
-              <div class="desc">Previously saved quotations — edit, re-download, or delete.</div>
+              <h3>Saved BOQs &amp; Quotations</h3>
+              <div class="desc">Previously saved BOQs and quotations — edit, re-download, or delete.</div>
             </div>
           </div>
           <div class="search-bar">
-            <input type="text" id="boqSearch" placeholder="Search by BOQ no., project or client…" />
+            <input type="text" id="boqSearch" placeholder="Search by number, type, project or client…" />
           </div>
           <div style="overflow-x:auto;">
             <table class="history-table" id="boqListTable">
               <thead>
                 <tr>
-                  <th>BOQ No.</th>
+                  <th>Doc No.</th>
+                  <th>Type</th>
                   <th>Project</th>
                   <th>Client</th>
                   <th>Date</th>
@@ -708,7 +716,7 @@
           </div>
           <div class="empty-state" id="boqListEmpty" style="display:none;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h6l1 3h3a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3l1-3z"/></svg>
-            <div>No BOQs saved yet.</div>
+            <div>No BOQs or quotations saved yet.</div>
           </div>
         </div>
       </section>
@@ -1521,7 +1529,7 @@
 <div class="modal-overlay" id="boqPreviewModal">
   <div class="modal-box wide">
     <div class="modal-header">
-      <h3>BOQ preview</h3>
+      <h3 id="boqPreviewTitle">BOQ preview</h3>
       <button class="modal-close" data-close="boqPreviewModal">×</button>
     </div>
     <div class="modal-body" style="background:#eee;">

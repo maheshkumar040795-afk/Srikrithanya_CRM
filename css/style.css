@@ -471,6 +471,8 @@ select:focus-visible, textarea:focus-visible {
 .pill.status-ok { background: #eef2ef; color: var(--success); }
 .pill.status-due { background: #fdecea; color: var(--danger); }
 .pill.status-overdue { background: var(--danger); color: var(--white); }
+.pill.doc-boq { background: #eef2ef; color: var(--success); }
+.pill.doc-quotation { background: #e8eefb; color: #2f5bb7; }
 
 /* ---------------- Toasts ---------------- */
 .toast-stack { position: fixed; bottom: 22px; right: 22px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
