@@ -39,6 +39,17 @@ function addItemRow(prefill) {
   renderItemsTable();
 }
 
+// Inserts a blank item directly above the row with this id — e.g. with items
+// 1–4 already entered, "insert" on row 2 puts a new empty item in position 2
+// and the old 2–4 move down to 3–5. Order is saved exactly as shown.
+function insertItemRowAbove(id) {
+  const idx = itemRows.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  itemRows.splice(idx, 0, { id: uid("item"), description: "", hsn: "", qty: 1, rate: 0 });
+  renderItemsTable();
+  focusNewItemRow("itemsBody", idx);
+}
+
 function removeItemRow(id) {
   itemRows = itemRows.filter(r => r.id !== id);
   if (itemRows.length === 0) addItemRow();
@@ -58,7 +69,12 @@ function renderItemsTable() {
       <td class="col-qty"><input type="number" min="0" step="1" value="${row.qty}" data-field="qty" data-id="${row.id}" /></td>
       <td class="col-rate"><input type="number" min="0" step="0.01" value="${row.rate}" data-field="rate" data-id="${row.id}" /></td>
       <td class="col-amt">${fmtMoney(amount)}</td>
-      <td><button type="button" class="row-remove" data-remove="${row.id}" title="Remove item">✕</button></td>
+      <td class="col-row-actions">
+        <div class="item-row-actions">
+          <button type="button" class="row-insert" data-insert="${row.id}" title="Insert a new item above this one" aria-label="Insert item above item ${idx + 1}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button type="button" class="row-remove" data-remove="${row.id}" title="Remove item" aria-label="Remove item ${idx + 1}">✕</button>
+        </div>
+      </td>
     `;
     body.appendChild(tr);
   });
@@ -78,6 +94,9 @@ function renderItemsTable() {
   });
   body.querySelectorAll("[data-remove]").forEach(btn => {
     btn.addEventListener("click", (e) => removeItemRow(e.target.getAttribute("data-remove")));
+  });
+  body.querySelectorAll("[data-insert]").forEach(btn => {
+    btn.addEventListener("click", (e) => insertItemRowAbove(e.currentTarget.getAttribute("data-insert")));
   });
 
   recalcTotals();

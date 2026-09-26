@@ -56,6 +56,20 @@ function numberToWordsIndian(amount) {
   return words + " Only";
 }
 
+// ---------------- Item tables: insert-row helper ----------------
+// Used by Invoice, BOQ / Quotation and Delivery Challan after a row is
+// inserted in the middle of the list: briefly highlights the new row and
+// puts the cursor in its Description box so the user can type straight away.
+function focusNewItemRow(bodyId, index) {
+  const body = document.getElementById(bodyId);
+  const tr = body && body.children[index];
+  if (!tr) return;
+  tr.classList.add("row-inserted");
+  const input = tr.querySelector('input[data-field="description"]');
+  if (input) input.focus();
+  setTimeout(() => tr.classList.remove("row-inserted"), 1400);
+}
+
 function showToast(message, type) {
   const stack = document.getElementById("toastStack");
   if (!stack) return;

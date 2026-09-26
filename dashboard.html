@@ -7,7 +7,9 @@
 <meta name="robots" content="noindex, nofollow" />
 <link rel="icon" href="assets/logo.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#150d0e" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -235,7 +237,7 @@
           <div class="panel-head">
             <div>
               <h3>Items / services</h3>
-              <div class="desc">Amount = Qty × Rate. Choose the GST type below — IGST, CGST/SGST, or Exempted.</div>
+              <div class="desc">Amount = Qty × Rate. Choose the GST type below — IGST, CGST/SGST, or Exempted. Use + on any row to insert a new item above it.</div>
             </div>
           </div>
 
@@ -249,7 +251,7 @@
                   <th class="col-qty">Qty</th>
                   <th class="col-rate">Rate (₹)</th>
                   <th class="col-amt">Amount (₹)</th>
-                  <th style="width:34px;"></th>
+                  <th class="col-row-actions"><span class="visually-hidden">Row actions</span></th>
                 </tr>
               </thead>
               <tbody id="itemsBody"></tbody>
@@ -452,7 +454,7 @@
               </div>
             </div>
             <div class="field" style="max-width:260px;">
-              <label>Role <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <label>Role <span class="label-opt">(optional)</span></label>
               <input type="text" id="i_role" list="idCardRoleDatalist" placeholder="e.g. Site Engineer" autocomplete="off" />
               <datalist id="idCardRoleDatalist">
                 <option value="Site Engineer"></option>
@@ -464,7 +466,7 @@
               <div class="hint">Pick a suggestion or type a new role — it's saved for next time too.</div>
             </div>
             <div class="field" style="max-width:220px;">
-              <label>Blood Group <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <label>Blood Group <span class="label-opt">(optional)</span></label>
               <select id="i_blood">
                 <option value="">Not specified</option>
                 <option>A+</option><option>A-</option>
@@ -622,7 +624,7 @@
           <div class="panel-head">
             <div>
               <h3>Items</h3>
-              <div class="desc">Amount = Qty × Rate. Set the GST % below — it's split evenly into CGST + SGST.</div>
+              <div class="desc">Amount = Qty × Rate. Set the GST % below — it's split evenly into CGST + SGST. Use + on any row to insert a new item above it.</div>
             </div>
           </div>
 
@@ -636,7 +638,7 @@
                   <th class="col-qty">Qty</th>
                   <th class="col-rate">Rate (₹)</th>
                   <th class="col-amt">Amount (₹)</th>
-                  <th style="width:34px;"></th>
+                  <th class="col-row-actions"><span class="visually-hidden">Row actions</span></th>
                 </tr>
               </thead>
               <tbody id="boqItemsBody"></tbody>
@@ -824,7 +826,7 @@
           <div class="panel-head">
             <div>
               <h3>Items</h3>
-              <div class="desc">Amount = Qty × Rate. Set the GST Type below — Job Work / Exempted challans show ₹0 GST.</div>
+              <div class="desc">Amount = Qty × Rate. Set the GST Type below — Job Work / Exempted challans show ₹0 GST. Use + on any row to insert a new item above it.</div>
             </div>
           </div>
 
@@ -839,7 +841,7 @@
                   <th class="col-qty">Qty</th>
                   <th class="col-rate">Rate (₹)</th>
                   <th class="col-amt">Amount (₹)</th>
-                  <th style="width:34px;"></th>
+                  <th class="col-row-actions"><span class="visually-hidden">Row actions</span></th>
                 </tr>
               </thead>
               <tbody id="challanItemsBody"></tbody>
@@ -872,7 +874,7 @@
           </div>
 
           <div class="field">
-            <label>Notes <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+            <label>Notes <span class="label-opt">(optional)</span></label>
             <textarea id="dc_notes" rows="2" placeholder="e.g. Goods dispatched as per work order. Received in good condition."></textarea>
           </div>
 
@@ -1072,7 +1074,7 @@
             </div>
           </div>
           <div class="field" style="max-width:280px;">
-            <label>Next Cycle Date <span style="font-weight:400;color:#8a7d7c;">(auto-filled, editable)</span></label>
+            <label>Next Cycle Date <span class="label-opt">(auto-filled, editable)</span></label>
             <input type="date" id="amc_nextCycleDate" />
           </div>
           <div class="action-bar" style="margin-top:4px;">
@@ -1140,7 +1142,7 @@
               <input type="text" id="emp_name" placeholder="Full name" />
             </div>
             <div class="field">
-              <label>Role <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <label>Role <span class="label-opt">(optional)</span></label>
               <input type="text" id="emp_role" list="employeeRoleDatalist" placeholder="e.g. Site Engineer" autocomplete="off" />
               <datalist id="employeeRoleDatalist">
                 <option value="Site Engineer"></option>
@@ -1153,11 +1155,11 @@
           </div>
           <div class="field-row">
             <div class="field">
-              <label>Contact <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <label>Contact <span class="label-opt">(optional)</span></label>
               <input type="tel" id="emp_contact" placeholder="91XXXXXXXXXX" />
             </div>
             <div class="field">
-              <label>Joined On <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <label>Joined On <span class="label-opt">(optional)</span></label>
               <input type="date" id="emp_joinDate" />
             </div>
           </div>
@@ -1231,7 +1233,7 @@
               <datalist id="supplierCompanyDatalist"></datalist>
             </div>
             <div class="field">
-              <label>Make / Brand <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+              <label>Make / Brand <span class="label-opt">(optional)</span></label>
               <input type="text" id="sp_make" placeholder="e.g. Jindal, Normex…" />
             </div>
           </div>
@@ -1519,7 +1521,7 @@
       <h3>Invoice preview</h3>
       <button class="modal-close" data-close="previewModal">×</button>
     </div>
-    <div class="modal-body" style="background:#eee;">
+    <div class="modal-body preview-stage">
       <div class="invoice-sheet" id="invoiceSheetPreview"></div>
     </div>
   </div>
@@ -1532,7 +1534,7 @@
       <h3 id="boqPreviewTitle">BOQ preview</h3>
       <button class="modal-close" data-close="boqPreviewModal">×</button>
     </div>
-    <div class="modal-body" style="background:#eee;">
+    <div class="modal-body preview-stage">
       <div class="invoice-sheet" id="boqSheetPreview"></div>
     </div>
   </div>
@@ -1545,7 +1547,7 @@
       <h3>Delivery Challan preview</h3>
       <button class="modal-close" data-close="challanPreviewModal">×</button>
     </div>
-    <div class="modal-body" style="background:#eee;">
+    <div class="modal-body preview-stage">
       <div class="invoice-sheet" id="challanSheetPreview"></div>
     </div>
   </div>
@@ -1558,7 +1560,7 @@
       <h3>Voucher preview</h3>
       <button class="modal-close" data-close="voucherPreviewModal">×</button>
     </div>
-    <div class="modal-body" style="background:#eee;">
+    <div class="modal-body preview-stage">
       <div class="invoice-sheet" id="voucherSheetPreview"></div>
     </div>
   </div>
@@ -1572,8 +1574,8 @@
       <button class="modal-close" data-close="welcomeModal">×</button>
     </div>
     <div class="modal-body">
-      <div style="font-size:1.15rem; font-weight:700; color:var(--maroon-950); margin-bottom:6px;">
-        👋 Welcome back, <span id="welcomeUserName">there</span>!
+      <div class="welcome-title">
+        Welcome back, <span id="welcomeUserName">there</span>!
       </div>
       <div class="desc" id="welcomeUserRole" style="margin-bottom:0;"></div>
     </div>
@@ -1751,7 +1753,7 @@
         </div>
       </div>
       <div class="field">
-        <label>Note <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+        <label>Note <span class="label-opt">(optional)</span></label>
         <input type="text" id="empAtt_note" placeholder="e.g. Site visit, sick leave…" />
       </div>
 
@@ -1820,7 +1822,7 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Description <span style="font-weight:400;color:#8a7d7c;">(optional)</span></label>
+          <label>Description <span class="label-opt">(optional)</span></label>
           <input type="text" id="empExp_description" placeholder="Optional note" />
         </div>
         <div class="field">
@@ -1898,7 +1900,7 @@
       <h3 id="documentPreviewModalTitle">Preview</h3>
       <button class="modal-close" data-close="documentPreviewModal">×</button>
     </div>
-    <div class="modal-body" style="background:#eee; padding:0;">
+    <div class="modal-body preview-stage flush">
       <iframe id="documentPreviewFrame" src="" style="width:100%; height:70vh; border:0; display:block;"></iframe>
     </div>
   </div>
