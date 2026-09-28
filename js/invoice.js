@@ -192,6 +192,7 @@ function resetInvoiceForm(newNumber) {
   document.getElementById("f_sgstPercent").value = 9;
   document.getElementById("f_igstPercent").value = 18;
   updateInvoiceGstTypeUI();
+  setTermsState("f", false, "");
   addItemRow();
 }
 
@@ -234,7 +235,8 @@ function collectFormData() {
     sgstPercent: totals.sgstPercent,
     sgstAmount: totals.sgst,
     netTotal: totals.total,
-    netAmountWords: numberToWordsIndian(totals.total)
+    netAmountWords: numberToWordsIndian(totals.total),
+    ...getTermsData("f")
   };
 }
 
@@ -264,6 +266,8 @@ function loadInvoiceIntoForm(data, docId) {
   document.getElementById("f_sgstPercent").value = data.sgstPercent != null ? data.sgstPercent : 9;
   document.getElementById("f_igstPercent").value = data.igstPercent != null ? data.igstPercent : 18;
   updateInvoiceGstTypeUI();
+  // Invoices saved before T&C existed have no terms fields — treat as off.
+  setTermsState("f", !!(data.termsEnabled && data.termsText), data.termsText || "");
   itemRows = (data.items || []).map(it => Object.assign({ id: uid("item") }, it));
   if (itemRows.length === 0) addItemRow();
   else renderItemsTable();
@@ -418,6 +422,7 @@ function renderInvoiceHTML(data) {
     </table>
     <div class="words-cell"><strong>Net Amount in Words:</strong> ${escapeHtml(data.netAmountWords)}</div>
     <div class="cert-cell">Certified that the particulars given above are true and correct, and the amount indicated represents the price actually charged.</div>
+    ${renderTermsPrintHtml(data)}
 
     <table class="bank-table">
       <tr>

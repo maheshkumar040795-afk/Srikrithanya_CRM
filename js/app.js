@@ -115,6 +115,7 @@ function closeSidebar() {
   document.getElementById("printBtn").addEventListener("click", printInvoice);
   wireBuyerAutocomplete();
   wireInvoiceGstTypeControls();
+  wireTermsToggle("f", () => fetchLastTermsFrom("invoices"));
 
   // Modal close buttons + overlay click
   document.querySelectorAll("[data-close]").forEach(btn => {
@@ -189,6 +190,10 @@ function closeSidebar() {
   document.getElementById("downloadBoqPdfBtn").addEventListener("click", () => downloadBoqPdf());
   wireBoqDocTypeControl();
   wireBoqGstTypeControls();
+  wireTermsToggle("b", () => {
+    const dt = document.getElementById("b_docType").value || "BOQ";
+    return fetchLastTermsFrom("boqs", x => (x.docType === "QUOTATION" ? "QUOTATION" : "BOQ") === dt);
+  });
   wireBoqClientAutocomplete();
   wireBoqSearch();
   startNewBoq();

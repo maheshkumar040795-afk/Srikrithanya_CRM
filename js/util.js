@@ -169,3 +169,62 @@ async function downloadRowsAsPdf(title, headers, rows, filename, orientation) {
     wrap.remove();
   }
 }
+
+
+// ---------------- Terms & Conditions (shared by Invoice and BOQ/Quotation) ----------------
+// prefix: "f" (invoice) or "b" (BOQ). getLastTerms: async fn returning last-used terms text (optional).
+function setTermsState(prefix, enabled, text) {
+  const field = document.getElementById(prefix + "_termsField");
+  const btn = document.getElementById(prefix + "_termsToggleBtn");
+  const ta = document.getElementById(prefix + "_termsText");
+  if (text !== undefined) ta.value = text || "";
+  field.style.display = enabled ? "" : "none";
+  btn.dataset.enabled = enabled ? "1" : "";
+  btn.textContent = enabled ? "✕ Remove Terms & Conditions" : "+ Add Terms & Conditions";
+  btn.classList.toggle("active", !!enabled);
+}
+
+function isTermsEnabled(prefix) {
+  return document.getElementById(prefix + "_termsToggleBtn").dataset.enabled === "1";
+}
+
+function getTermsData(prefix) {
+  const enabled = isTermsEnabled(prefix);
+  const text = document.getElementById(prefix + "_termsText").value.trim();
+  return { termsEnabled: enabled && !!text, termsText: enabled ? text : "" };
+}
+
+function wireTermsToggle(prefix, getLastTerms) {
+  const btn = document.getElementById(prefix + "_termsToggleBtn");
+  const ta = document.getElementById(prefix + "_termsText");
+  btn.addEventListener("click", async () => {
+    if (isTermsEnabled(prefix)) { setTermsState(prefix, false); return; }
+    setTermsState(prefix, true);
+    if (!ta.value.trim() && typeof getLastTerms === "function") {
+      try {
+        const last = await getLastTerms();
+        if (last && !ta.value.trim()) ta.value = last;
+      } catch (err) { /* prefill is best-effort */ }
+    }
+    ta.focus();
+  });
+}
+
+// Looks up the most recent saved doc in a collection that had terms (optionally matching a filter fn).
+async function fetchLastTermsFrom(collectionName, matchFn) {
+  const snap = await db.collection(collectionName).orderBy("createdAt", "desc").limit(30).get();
+  for (const d of snap.docs) {
+    const x = d.data();
+    if (x.termsEnabled && x.termsText && (!matchFn || matchFn(x))) return x.termsText;
+  }
+  return "";
+}
+
+function renderTermsPrintHtml(data) {
+  if (!data || !data.termsEnabled || !data.termsText || !String(data.termsText).trim()) return "";
+  const lines = String(data.termsText).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const body = lines.length > 1
+    ? `<ol>${lines.map(l => `<li>${escapeHtml(l.replace(/^(\d+[.)]|[-•*])\s*/, ""))}</li>`).join("")}</ol>`
+    : `<div>${escapeHtml(lines[0])}</div>`;
+  return `<div class="terms-cell"><div class="terms-title">Terms &amp; Conditions</div>${body}</div>`;
+}

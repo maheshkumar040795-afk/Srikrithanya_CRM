@@ -195,6 +195,7 @@ function resetBoqForm(newNumber) {
   document.getElementById("b_sgstPercent").value = 9;
   document.getElementById("b_igstPercent").value = 18;
   updateBoqGstTypeUI();
+  setTermsState("b", false, "");
   addBoqItemRow();
 }
 
@@ -228,7 +229,8 @@ function collectBoqFormData() {
     sgstPercent: totals.sgstPercent,
     sgstAmount: totals.sgst,
     netTotal: totals.total,
-    netAmountWords: numberToWordsIndian(totals.total)
+    netAmountWords: numberToWordsIndian(totals.total),
+    ...getTermsData("b")
   };
 }
 
@@ -256,6 +258,8 @@ function loadBoqIntoForm(data, docId) {
   }
   document.getElementById("b_igstPercent").value = data.igstPercent != null ? data.igstPercent : 18;
   updateBoqGstTypeUI();
+  // BOQs/Quotations saved before T&C existed have no terms fields — treat as off.
+  setTermsState("b", !!(data.termsEnabled && data.termsText), data.termsText || "");
   boqItemRows = (data.items || []).map(it => Object.assign({ id: uid("boqitem") }, it));
   if (boqItemRows.length === 0) addBoqItemRow();
   else renderBoqItemsTable();
@@ -534,6 +538,7 @@ function renderBoqHTML(data) {
       <tr><td class="lbl-cell" style="font-size:12.5px;">Total (Net Amount)</td><td class="val-cell" style="font-size:12.5px;">₹${Number(data.netTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
     </table>
     <div class="words-cell"><strong>Net Amount in Words:</strong> ${escapeHtml(data.netAmountWords)}</div>
+    ${renderTermsPrintHtml(data)}
 
     <table class="bank-table">
       <tr>

@@ -293,6 +293,15 @@
             </table>
           </div>
           <div class="words-line" id="t_words">Amount in words: —</div>
+
+          <div class="terms-block" id="f_termsBlock">
+            <button type="button" class="btn btn-ghost terms-toggle-btn" id="f_termsToggleBtn">+ Add Terms &amp; Conditions</button>
+            <div class="field terms-field" id="f_termsField" style="display:none;">
+              <label>Terms &amp; Conditions <span class="label-opt">(one per line — printed on the invoice)</span></label>
+              <textarea id="f_termsText" rows="6" placeholder="e.g.&#10;Payment: 50% advance, balance on completion.&#10;Delivery within 15 days from the date of PO.&#10;Warranty: 12 months from the date of installation."></textarea>
+              <div class="hint">Typed once here, it prints on the Preview and the PDF. New documents start with the terms you used last time.</div>
+            </div>
+          </div>
         </div>
 
         <div class="action-bar">
@@ -680,6 +689,15 @@
             </table>
           </div>
           <div class="words-line" id="b_words">Amount in words: —</div>
+
+          <div class="terms-block" id="b_termsBlock">
+            <button type="button" class="btn btn-ghost terms-toggle-btn" id="b_termsToggleBtn">+ Add Terms &amp; Conditions</button>
+            <div class="field terms-field" id="b_termsField" style="display:none;">
+              <label>Terms &amp; Conditions <span class="label-opt">(one per line — printed on the document)</span></label>
+              <textarea id="b_termsText" rows="6" placeholder="e.g.&#10;Payment: 50% advance, balance on completion.&#10;Delivery within 15 days from the date of PO.&#10;Warranty: 12 months from the date of installation."></textarea>
+              <div class="hint">Typed once here, it prints on the Preview and the PDF. New documents start with the terms you used last time.</div>
+            </div>
+          </div>
         </div>
 
         <div class="action-bar">

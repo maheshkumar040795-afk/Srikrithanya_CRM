@@ -771,6 +771,10 @@ select:focus-visible, textarea:focus-visible {
 .invoice-sheet .totals-print .lbl-cell { text-align: right; font-weight: 600; width: 82%; }
 .invoice-sheet .totals-print .val-cell { text-align: right; font-weight: 700; width: 18%; }
 .invoice-sheet .words-cell { border: 1px solid #999; border-top: none; padding: 8px 10px; font-size: 11.5px; }
+.invoice-sheet .terms-cell { border: 1px solid #999; border-top: none; padding: 8px 10px; font-size: 10.5px; line-height: 1.45; page-break-inside: avoid; }
+.invoice-sheet .terms-cell .terms-title { font-weight: 700; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+.invoice-sheet .terms-cell ol { margin: 0; padding-left: 18px; }
+.invoice-sheet .terms-cell li { margin: 1px 0; }
 .invoice-sheet .cert-cell { border: 1px solid #999; border-top: none; padding: 8px 10px; font-size: 10.5px; font-style: italic; text-align: center; color: #444; }
 .invoice-sheet .bank-table td { border: 1px solid #999; border-top: none; padding: 10px; vertical-align: top; }
 .invoice-sheet .bank-table .sig-cell { text-align: center; }
@@ -1096,3 +1100,10 @@ select:focus-visible, textarea:focus-visible {
 /* Pills generated with inline colours (attendance status, staff role) —
    keep their colours, just match the pill shape */
 .history-table .pill[style] { text-transform: capitalize; }
+
+/* Terms & Conditions toggle (Invoice + BOQ/Quotation forms) */
+.terms-block { margin-top: 16px; border-top: 1px dashed var(--line, #e3d6d6); padding-top: 14px; }
+.terms-toggle-btn { width: auto; }
+.terms-toggle-btn.active { color: var(--danger, #b42318); border-color: currentColor; }
+.terms-field { margin-top: 12px; }
+.terms-field textarea { width: 100%; resize: vertical; }
