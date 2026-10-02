@@ -295,11 +295,20 @@ let currentVoucherPreviewData = null;
 function openVoucherPreview(data) {
   data = data || collectVoucherFormData();
   currentVoucherPreviewData = data;
-  document.getElementById("voucherSheetPreview").innerHTML = renderVoucherHTML(data);
   document.getElementById("voucherPreviewModal").classList.add("open");
+  // Preview shows the exact A4 page(s) the PDF download will contain.
+  renderPagedPreview(document.getElementById("voucherSheetPreview"), renderVoucherHTML(data), voucherPdfOpts(data));
 }
 
 // ---------------- PDF export (reuses PDF_OPTS + waitForImages from js/invoice.js) ----------------
+
+/** Page settings shared by the Voucher preview and the downloaded PDF. */
+function voucherPdfOpts(data) {
+  return {
+    footerLeft: SELLER.name + " · PV No: " + (data.pvNo || "—"),
+    contLabel: "PV No: " + (data.pvNo || "—") + " — continued"
+  };
+}
 
 async function buildVoucherPdfFile(data) {
   if (typeof html2pdf === "undefined") {
@@ -310,10 +319,7 @@ async function buildVoucherPdfFile(data) {
   sheet.innerHTML = renderVoucherHTML(data);
   await waitForImages(sheet);
   void sheet.offsetHeight; // force layout flush before html2canvas, same fix as the invoice sheet
-  const blob = await buildPagedPdfBlob(sheet.innerHTML, {
-    footerLeft: SELLER.name + " · PV No: " + (data.pvNo || "—"),
-    contLabel: "PV No: " + (data.pvNo || "—") + " — continued"
-  });
+  const blob = await buildPagedPdfBlob(sheet.innerHTML, voucherPdfOpts(data));
   const filename = (data.pvNo || "Voucher") + ".pdf";
   return { blob, filename, data };
 }

@@ -553,11 +553,20 @@ function wireBuyerAutocomplete() {
 // ---------------- Preview / Print ----------------
 let currentPreviewData = null; // whichever invoice's data is currently shown in the preview modal
 
+/** Page settings shared by the Invoice preview and the downloaded PDF (identical pages). */
+function invoicePdfOpts(data) {
+  return {
+    footerLeft: SELLER.name + " · Tax Invoice No: " + (data.invoiceNo || "—"),
+    contLabel: "Tax Invoice No: " + (data.invoiceNo || "—") + " — continued"
+  };
+}
+
 function openPreview(data) {
   data = data || collectFormData();
   currentPreviewData = data;
-  document.getElementById("invoiceSheetPreview").innerHTML = renderInvoiceHTML(data);
   document.getElementById("previewModal").classList.add("open");
+  // Preview shows the exact A4 pages the PDF download will contain.
+  renderPagedPreview(document.getElementById("invoiceSheetPreview"), renderInvoiceHTML(data), invoicePdfOpts(data));
 }
 
 function printInvoice() {
@@ -602,10 +611,7 @@ async function buildInvoicePdfFile(data) {
 
   // Page-aware export (js/pdf-pages.js): real A4 pages, header row repeated,
   // no split rows / totals / bank + signature block. Same output on laptop and mobile.
-  const blob = await buildPagedPdfBlob(sheet.innerHTML, {
-    footerLeft: SELLER.name + " · Tax Invoice No: " + (data.invoiceNo || "—"),
-    contLabel: "Tax Invoice No: " + (data.invoiceNo || "—") + " — continued"
-  });
+  const blob = await buildPagedPdfBlob(sheet.innerHTML, invoicePdfOpts(data));
   const filename = (data.invoiceNo || "invoice") + ".pdf";
   return { blob, filename, data };
 }

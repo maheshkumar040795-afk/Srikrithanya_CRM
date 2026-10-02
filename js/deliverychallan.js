@@ -549,11 +549,20 @@ let currentChallanPreviewData = null;
 function openChallanPreview(data) {
   data = data || collectChallanFormData();
   currentChallanPreviewData = data;
-  document.getElementById("challanSheetPreview").innerHTML = renderChallanHTML(data);
   document.getElementById("challanPreviewModal").classList.add("open");
+  // Preview shows the exact A4 pages the PDF download will contain.
+  renderPagedPreview(document.getElementById("challanSheetPreview"), renderChallanHTML(data), challanPdfOpts(data));
 }
 
 // ---------------- PDF export (reuses PDF_OPTS + waitForImages from js/invoice.js) ----------------
+
+/** Page settings shared by the Delivery Challan preview and the downloaded PDF. */
+function challanPdfOpts(data) {
+  return {
+    footerLeft: SELLER.name + " · Challan No: " + (data.challanNo || "—"),
+    contLabel: "Challan No: " + (data.challanNo || "—") + " — continued"
+  };
+}
 
 async function buildChallanPdfFile(data) {
   if (typeof html2pdf === "undefined") {
@@ -564,10 +573,7 @@ async function buildChallanPdfFile(data) {
   sheet.innerHTML = renderChallanHTML(data);
   await waitForImages(sheet);
   void sheet.offsetHeight; // force layout flush before html2canvas, same fix as the invoice sheet
-  const blob = await buildPagedPdfBlob(sheet.innerHTML, {
-    footerLeft: SELLER.name + " · Challan No: " + (data.challanNo || "—"),
-    contLabel: "Challan No: " + (data.challanNo || "—") + " — continued"
-  });
+  const blob = await buildPagedPdfBlob(sheet.innerHTML, challanPdfOpts(data));
   const filename = (data.challanNo || "Delivery-Challan") + ".pdf";
   return { blob, filename, data };
 }

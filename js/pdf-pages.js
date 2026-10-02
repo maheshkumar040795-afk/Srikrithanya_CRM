@@ -54,6 +54,32 @@ function _pdfMeasure(host) {
   });
 }
 
+/** Combine live-page and render-copy measurements safely.
+ *  - Laptop: the render copy can be ~10% taller (web font fully loaded) → trust it.
+ *  - iPhone Safari: the render copy can report wildly inflated sizes (≈2x) even though
+ *    the drawn PDF is normal → ignore it and use the live page.
+ *  When both are plausible, each block/row uses the larger value, so nothing can
+ *  run into the footer in either environment. */
+function _pdfReconcile(live, clone) {
+  if (!clone || clone.length !== live.length) return live;
+  for (let i = 0; i < live.length; i++) if (live[i].table !== clone[i].table) return live;
+  const total = arr => arr.reduce((s, m) => s + m.h, 0);
+  const ratio = total(clone) / Math.max(1, total(live));
+  if (!(ratio > 0.85 && ratio < 1.25)) return live;      // implausible → live layout
+  return live.map((l, i) => {
+    const c = clone[i];
+    if (!l.table) return { table: false, h: Math.max(l.h, c.h) };
+    if (l.rowH.length !== c.rowH.length) return l;
+    return {
+      table: true,
+      h: Math.max(l.h, c.h),
+      headH: Math.max(l.headH, c.headH),
+      rowH: l.rowH.map((h, j) => Math.max(h, c.rowH[j])),
+      colW: l.colW
+    };
+  });
+}
+
 function _pdfIsSplittableTable(el) {
   return el.tagName === "TABLE" && el.tHead && el.tBodies.length === 1 && el.tBodies[0].rows.length > 1;
 }
@@ -67,7 +93,7 @@ function _pdfIsSplittableTable(el) {
  *   footerLeft   text at bottom-left of every page
  *   contLabel    text shown at top-right of pages 2+ (e.g. "Quotation No: 01 — continued")
  */
-async function buildPagedPdfBlob(html, opts) {
+async function _pdfLayoutPages(html, opts) {
   if (typeof html2pdf === "undefined") {
     throw new Error("The PDF library didn't load — check your internet connection and reload the page.");
   }
@@ -133,7 +159,8 @@ async function buildPagedPdfBlob(html, opts) {
       })).from(host).toCanvas();
     } catch (e) { console.warn("PDF clone measure failed, using live layout", e); }
     const children = Array.from(host.children);
-    if (!measured || measured.length !== children.length) measured = _pdfMeasure(host);
+    const live = _pdfMeasure(host);
+    measured = _pdfReconcile(live, measured);
 
     // Units to pack: atomic blocks, or splittable tables (rows measured individually).
     const units = children.map((el, i) => {
@@ -246,7 +273,17 @@ async function buildPagedPdfBlob(html, opts) {
     pageEls.forEach(p => stage.appendChild(p));
     await waitForImages(stage);
     void stage.offsetHeight;
+    return { stage, pageEls, geo, orientation, workerOpts, pageMm };
+  } catch (err) {
+    stage.remove();
+    throw err;
+  }
+}
 
+/** Builds the paginated PDF Blob (see header comment). */
+async function buildPagedPdfBlob(html, opts) {
+  const { stage, pageEls, orientation, workerOpts, pageMm } = await _pdfLayoutPages(html, opts);
+  try {
     // ---------- 4. Render each page and assemble ----------
     let pdf = null;
     for (let i = 0; i < pageEls.length; i++) {
@@ -265,6 +302,59 @@ async function buildPagedPdfBlob(html, opts) {
       pdf.addImage(img, "JPEG", 0, 0, pageMm.w, imgH);
     }
     return pdf.output("blob");
+  } finally {
+    stage.remove();
+  }
+}
+
+/**
+ * Preview = the downloaded PDF. Lays the document out with exactly the same page
+ * builder as the download (same page breaks, repeated header row, "continued" label,
+ * footer and page numbers) and shows those A4 pages in `container`, scaled down to
+ * fit the screen on phones. Used by the Invoice / Quotation / DC / Voucher previews.
+ */
+let _pdfPreviewToken = 0;
+async function renderPagedPreview(container, html, opts) {
+  const token = ++_pdfPreviewToken;
+  container.classList.add("pdf-preview");
+  container.innerHTML = '<div class="pdf-preview-loading">Preparing preview…</div>';
+  let layout;
+  try {
+    layout = await _pdfLayoutPages(html, opts);
+  } catch (err) {
+    console.error(err);
+    // Fallback: plain single sheet, so the user still sees the document.
+    if (token === _pdfPreviewToken) {
+      container.classList.remove("pdf-preview");
+      container.innerHTML = '<div class="invoice-sheet">' + html + '</div>';
+    }
+    return;
+  }
+  const { stage, pageEls, geo } = layout;
+  try {
+    if (token !== _pdfPreviewToken) return;   // a newer preview was opened meanwhile
+    container.innerHTML = "";
+    const frames = pageEls.map(page => {
+      const frame = document.createElement("div");
+      frame.className = "pdf-preview-page";
+      page.style.transformOrigin = "0 0";
+      frame.appendChild(page);              // moves the page out of the off-screen stage
+      container.appendChild(frame);
+      return { frame, page };
+    });
+    const fit = () => {
+      const avail = container.clientWidth || geo.w;
+      const scale = Math.min(1, avail / geo.w);
+      frames.forEach(({ frame, page }) => {
+        frame.style.width = Math.floor(geo.w * scale) + "px";
+        frame.style.height = Math.floor(geo.h * scale) + "px";
+        page.style.transform = scale < 1 ? "scale(" + scale + ")" : "";
+      });
+    };
+    fit();
+    container._pdfFit && window.removeEventListener("resize", container._pdfFit);
+    container._pdfFit = fit;
+    window.addEventListener("resize", fit);
   } finally {
     stage.remove();
   }

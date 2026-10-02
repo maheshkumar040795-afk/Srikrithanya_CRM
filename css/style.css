@@ -780,6 +780,17 @@ select:focus-visible, textarea:focus-visible {
 .invoice-sheet .terms-cell .term-text { flex: 1 1 auto; min-width: 0; }
 /* PDF pages: fixed text size so phones (iOS text autosizing) render exactly like laptops */
 .pdf-stage, .pdf-stage * { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+/* Preview = downloaded PDF: real A4 pages, scaled to fit the screen on phones */
+.pdf-preview { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%; }
+.pdf-preview, .pdf-preview * { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+.pdf-preview-page {
+  position: relative; overflow: hidden; flex-shrink: 0; background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 14px 32px -14px rgba(21,13,14,0.35);
+}
+.pdf-preview-page > .pdf-page { position: absolute; left: 0; top: 0; }
+.pdf-preview-loading { padding: 48px 16px; text-align: center; color: var(--muted); font-size: 0.9rem; }
+
 .invoice-sheet .cert-cell { border: 1px solid #999; border-top: none; padding: 8px 10px; font-size: 10.5px; font-style: italic; text-align: center; color: #444; }
 .invoice-sheet .bank-table td { border: 1px solid #999; border-top: none; padding: 10px; vertical-align: top; }
 .invoice-sheet .bank-table .sig-cell { text-align: center; }
@@ -1112,3 +1123,13 @@ select:focus-visible, textarea:focus-visible {
 .terms-toggle-btn.active { color: var(--danger, #b42318); border-color: currentColor; }
 .terms-field { margin-top: 12px; }
 .terms-field textarea { width: 100%; resize: vertical; }
+
+/* Document previews (Invoice / Quotation / DC / Voucher) on phones: give the A4 pages
+   as much screen width as possible. Placed last so it wins over .preview-stage above. */
+@media (max-width: 860px) {
+  #previewModal, #boqPreviewModal, #challanPreviewModal, #voucherPreviewModal { padding: 6px; }
+  #previewModal .modal-box, #boqPreviewModal .modal-box,
+  #challanPreviewModal .modal-box, #voucherPreviewModal .modal-box { max-height: 96vh; border-radius: 14px; }
+  .modal-body.preview-stage:not(.flush) { padding: 8px; }
+  .pdf-preview { gap: 10px; }
+}

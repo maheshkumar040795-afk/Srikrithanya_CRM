@@ -570,11 +570,21 @@ function openBoqPreview(data) {
   data = data || collectBoqFormData();
   currentBoqPreviewData = data;
   document.getElementById("boqPreviewTitle").textContent = getBoqDocMeta(data.docType).short + " preview";
-  document.getElementById("boqSheetPreview").innerHTML = renderBoqHTML(data);
   document.getElementById("boqPreviewModal").classList.add("open");
+  // Preview shows the exact A4 pages the PDF download will contain.
+  renderPagedPreview(document.getElementById("boqSheetPreview"), renderBoqHTML(data), boqPdfOpts(data));
 }
 
 // ---------------- PDF export (reuses PDF_OPTS + waitForImages from js/invoice.js) ----------------
+
+/** Page settings shared by the BOQ / Quotation preview and the downloaded PDF. */
+function boqPdfOpts(data) {
+  const meta = getBoqDocMeta(data.docType);
+  return {
+    footerLeft: SELLER.name + " · " + meta.noLabel + ": " + (data.boqNo || "—"),
+    contLabel: meta.noLabel + ": " + (data.boqNo || "—") + " — continued"
+  };
+}
 
 async function buildBoqPdfFile(data) {
   if (typeof html2pdf === "undefined") {
@@ -586,10 +596,7 @@ async function buildBoqPdfFile(data) {
   await waitForImages(sheet);
   void sheet.offsetHeight; // force layout flush before html2canvas, same fix as the invoice sheet
   const meta = getBoqDocMeta(data.docType);
-  const blob = await buildPagedPdfBlob(sheet.innerHTML, {
-    footerLeft: SELLER.name + " · " + meta.noLabel + ": " + (data.boqNo || "—"),
-    contLabel: meta.noLabel + ": " + (data.boqNo || "—") + " — continued"
-  });
+  const blob = await buildPagedPdfBlob(sheet.innerHTML, boqPdfOpts(data));
   const filename = (data.boqNo || meta.short) + ".pdf";
   return { blob, filename, data };
 }
