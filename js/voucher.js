@@ -310,7 +310,10 @@ async function buildVoucherPdfFile(data) {
   sheet.innerHTML = renderVoucherHTML(data);
   await waitForImages(sheet);
   void sheet.offsetHeight; // force layout flush before html2canvas, same fix as the invoice sheet
-  const blob = await html2pdf().set(PDF_OPTS).from(sheet).outputPdf("blob");
+  const blob = await buildPagedPdfBlob(sheet.innerHTML, {
+    footerLeft: SELLER.name + " · PV No: " + (data.pvNo || "—"),
+    contLabel: "PV No: " + (data.pvNo || "—") + " — continued"
+  });
   const filename = (data.pvNo || "Voucher") + ".pdf";
   return { blob, filename, data };
 }

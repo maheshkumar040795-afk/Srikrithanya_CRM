@@ -775,6 +775,11 @@ select:focus-visible, textarea:focus-visible {
 .invoice-sheet .terms-cell .terms-title { font-weight: 700; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
 .invoice-sheet .terms-cell ol { margin: 0; padding-left: 18px; }
 .invoice-sheet .terms-cell li { margin: 1px 0; }
+.invoice-sheet .terms-cell .term-row { display: flex; gap: 6px; margin: 1px 0; }
+.invoice-sheet .terms-cell .term-no { flex: 0 0 18px; text-align: right; }
+.invoice-sheet .terms-cell .term-text { flex: 1 1 auto; min-width: 0; }
+/* PDF pages: fixed text size so phones (iOS text autosizing) render exactly like laptops */
+.pdf-stage, .pdf-stage * { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .invoice-sheet .cert-cell { border: 1px solid #999; border-top: none; padding: 8px 10px; font-size: 10.5px; font-style: italic; text-align: center; color: #444; }
 .invoice-sheet .bank-table td { border: 1px solid #999; border-top: none; padding: 10px; vertical-align: top; }
 .invoice-sheet .bank-table .sig-cell { text-align: center; }

@@ -564,7 +564,10 @@ async function buildChallanPdfFile(data) {
   sheet.innerHTML = renderChallanHTML(data);
   await waitForImages(sheet);
   void sheet.offsetHeight; // force layout flush before html2canvas, same fix as the invoice sheet
-  const blob = await html2pdf().set(PDF_OPTS).from(sheet).outputPdf("blob");
+  const blob = await buildPagedPdfBlob(sheet.innerHTML, {
+    footerLeft: SELLER.name + " · Challan No: " + (data.challanNo || "—"),
+    contLabel: "Challan No: " + (data.challanNo || "—") + " — continued"
+  });
   const filename = (data.challanNo || "Delivery-Challan") + ".pdf";
   return { blob, filename, data };
 }

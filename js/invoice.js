@@ -600,7 +600,12 @@ async function buildInvoicePdfFile(data) {
   // Force a layout flush before handing off to html2canvas.
   void sheet.offsetHeight;
 
-  const blob = await html2pdf().set(PDF_OPTS).from(sheet).outputPdf("blob");
+  // Page-aware export (js/pdf-pages.js): real A4 pages, header row repeated,
+  // no split rows / totals / bank + signature block. Same output on laptop and mobile.
+  const blob = await buildPagedPdfBlob(sheet.innerHTML, {
+    footerLeft: SELLER.name + " · Tax Invoice No: " + (data.invoiceNo || "—"),
+    contLabel: "Tax Invoice No: " + (data.invoiceNo || "—") + " — continued"
+  });
   const filename = (data.invoiceNo || "invoice") + ".pdf";
   return { blob, filename, data };
 }

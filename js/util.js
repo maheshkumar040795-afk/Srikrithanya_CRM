@@ -138,9 +138,7 @@ async function downloadRowsAsPdf(title, headers, rows, filename, orientation) {
     showToast("Nothing to export.", "error");
     return;
   }
-  const wrap = document.createElement("div");
-  wrap.style.cssText = "padding:20px;font-family:Arial,Helvetica,sans-serif;background:#fff;";
-  wrap.innerHTML = `
+  const html = `
     <div style="font-size:16px;font-weight:700;margin-bottom:2px;">${escapeHtml(title)}</div>
     <div style="font-size:10.5px;color:#777;margin-bottom:12px;">Generated ${fmtDate(todayISO())}</div>
     <table style="width:100%;border-collapse:collapse;font-size:10.5px;">
@@ -152,21 +150,21 @@ async function downloadRowsAsPdf(title, headers, rows, filename, orientation) {
       </tbody>
     </table>
   `;
-  document.body.appendChild(wrap);
+  showToast("Preparing PDF…");
   try {
-    const blob = await html2pdf().set({
-      margin: [10, 8, 10, 8],
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: orientation || "landscape" }
-    }).from(wrap).outputPdf("blob");
+    // Page-aware export (js/pdf-pages.js): header row on every page, rows never split.
+    const blob = await buildPagedPdfBlob(html, {
+      orientation: orientation || "landscape",
+      sheetClass: "",
+      baseStyle: "font-family:Arial,Helvetica,sans-serif;color:#111;",
+      footerLeft: "SRIKRITHANYA PRIVATE LIMITED · " + title,
+      contLabel: title + " — continued"
+    });
     triggerBlobDownload(blob, filename);
     showToast("PDF downloaded.", "success");
   } catch (err) {
     console.error(err);
     showToast(err.message || "Couldn't generate the PDF.", "error");
-  } finally {
-    wrap.remove();
   }
 }
 
@@ -223,8 +221,10 @@ async function fetchLastTermsFrom(collectionName, matchFn) {
 function renderTermsPrintHtml(data) {
   if (!data || !data.termsEnabled || !data.termsText || !String(data.termsText).trim()) return "";
   const lines = String(data.termsText).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  // Numbers are written out explicitly (not <ol> markers) — the PDF renderer
+  // drops list markers, which is why the numbering vanished in laptop PDFs.
   const body = lines.length > 1
-    ? `<ol>${lines.map(l => `<li>${escapeHtml(l.replace(/^(\d+[.)]|[-•*])\s*/, ""))}</li>`).join("")}</ol>`
+    ? lines.map((l, i) => `<div class="term-row"><span class="term-no">${i + 1}.</span><span class="term-text">${escapeHtml(l.replace(/^(\d+[.)]|[-•*])\s*/, ""))}</span></div>`).join("")
     : `<div>${escapeHtml(lines[0])}</div>`;
   return `<div class="terms-cell"><div class="terms-title">Terms &amp; Conditions</div>${body}</div>`;
 }

@@ -585,8 +585,12 @@ async function buildBoqPdfFile(data) {
   sheet.innerHTML = renderBoqHTML(data);
   await waitForImages(sheet);
   void sheet.offsetHeight; // force layout flush before html2canvas, same fix as the invoice sheet
-  const blob = await html2pdf().set(PDF_OPTS).from(sheet).outputPdf("blob");
-  const filename = (data.boqNo || getBoqDocMeta(data.docType).short) + ".pdf";
+  const meta = getBoqDocMeta(data.docType);
+  const blob = await buildPagedPdfBlob(sheet.innerHTML, {
+    footerLeft: SELLER.name + " · " + meta.noLabel + ": " + (data.boqNo || "—"),
+    contLabel: meta.noLabel + ": " + (data.boqNo || "—") + " — continued"
+  });
+  const filename = (data.boqNo || meta.short) + ".pdf";
   return { blob, filename, data };
 }
 

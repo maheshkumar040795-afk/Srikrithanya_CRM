@@ -337,12 +337,10 @@ async function downloadFinancePdf() {
     await Promise.all(imgs.map(img => (img.complete && img.naturalWidth > 0) ? Promise.resolve() :
       new Promise(res => { img.addEventListener("load", res, { once: true }); img.addEventListener("error", res, { once: true }); })));
     void sheet.offsetHeight;
-    const blob = await html2pdf().set({
-      margin: [10, 8, 10, 8],
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, allowTaint: false },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-    }).from(sheet).outputPdf("blob");
+    const blob = await buildPagedPdfBlob(sheet.innerHTML, {
+      footerLeft: "SRIKRITHANYA PRIVATE LIMITED · Financial Statement",
+      contLabel: "Financial Statement — continued"
+    });
     triggerBlobDownload(blob, `Financial-Statement-${todayISO()}.pdf`);
     showToast("PDF downloaded.", "success");
   } catch (err) {
