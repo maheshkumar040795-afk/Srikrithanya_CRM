@@ -36,6 +36,24 @@ function _pdfFlowHeights(children, host) {
   return children.map((el, i) => Math.max(0, (i + 1 < children.length ? tops[i + 1] : end) - tops[i]));
 }
 
+/** Pure measurement of a laid-out host — returns numbers only, so it can run inside
+ *  html2canvas's cloned document (the exact environment the PDF is drawn in). */
+function _pdfMeasure(host) {
+  const children = Array.from(host.children);
+  const heights = _pdfFlowHeights(children, host);
+  return children.map((el, i) => {
+    if (!_pdfIsSplittableTable(el)) return { table: false, h: heights[i] };
+    const rows = Array.from(el.tBodies[0].rows);
+    const rowRects = rows.map(r => r.getBoundingClientRect());
+    const bodyBottom = el.tBodies[0].getBoundingClientRect().bottom;
+    const rowH = rows.map((r, j) => (j + 1 < rows.length ? rowRects[j + 1].top : bodyBottom) - rowRects[j].top);
+    const headH = rowRects[0].top - el.getBoundingClientRect().top;
+    const extra = Math.max(0, heights[i] - headH - rowH.reduce((a, b) => a + b, 0)); // margins / borders
+    const colW = Array.from(el.tHead.rows[0].cells).map(c => c.getBoundingClientRect().width);
+    return { table: true, h: heights[i], rowH, headH: headH + extra, colW };
+  });
+}
+
 function _pdfIsSplittableTable(el) {
   return el.tagName === "TABLE" && el.tHead && el.tBodies.length === 1 && el.tBodies[0].rows.length > 1;
 }
@@ -63,7 +81,8 @@ async function buildPagedPdfBlob(html, opts) {
   const PAD_BOTTOM = 46;       // room for the page footer
   const CONT_H = 20;           // "continued" label height on pages 2+
   const contentW = geo.w - PAD_X * 2;
-  const availFirst = geo.h - PAD_TOP - PAD_BOTTOM;
+  const SAFE = 8;              // small safety gap above the footer
+  const availFirst = geo.h - PAD_TOP - PAD_BOTTOM - SAFE;
   const availNext = availFirst - (opts.contLabel ? CONT_H : 0);
 
   // Off-screen stage. Fixed widths everywhere, so layout never depends on the
@@ -74,6 +93,19 @@ async function buildPagedPdfBlob(html, opts) {
   document.body.appendChild(stage);
 
   try {
+    const pageMm = orientation === "portrait" ? { w: 210, h: 297 } : { w: 297, h: 210 };
+    const workerOpts = {
+      margin: 0,
+      image: { type: "jpeg", quality: 0.96 },
+      html2canvas: {
+        scale: 2, useCORS: true, allowTaint: false, backgroundColor: "#ffffff",
+        scrollX: 0, scrollY: 0,
+        width: geo.w, height: geo.h,
+        windowWidth: 1280, windowHeight: 1600   // render as a desktop browser, even on phones
+      },
+      jsPDF: { unit: "mm", format: "a4", orientation: orientation }
+    };
+
     // ---------- 1. Measure ----------
     const host = document.createElement("div");
     host.className = (sheetClass + " pdf-measure").trim();
@@ -81,23 +113,33 @@ async function buildPagedPdfBlob(html, opts) {
     host.innerHTML = html;
     stage.appendChild(host);
     await waitForImages(host);
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
     void host.offsetHeight;
 
+    // Measure inside html2canvas's own cloned document — the same window width,
+    // fonts (e.g. Inter) and CSS the pages are later drawn with. Measuring in the live
+    // page could disagree (font not yet loaded, browser zoom), which pushed the last
+    // rows of a page under the footer on laptops. Falls back to the live page.
+    let measured = null;
+    try {
+      await html2pdf().set(Object.assign({}, workerOpts, {
+        html2canvas: Object.assign({}, workerOpts.html2canvas, {
+          scale: 1, width: contentW, height: 4,
+          onclone: (doc) => {
+            const cloneHost = doc.querySelector(".html2pdf__container .pdf-measure") || doc.querySelector(".pdf-measure");
+            if (cloneHost) measured = _pdfMeasure(cloneHost);
+          }
+        })
+      })).from(host).toCanvas();
+    } catch (e) { console.warn("PDF clone measure failed, using live layout", e); }
     const children = Array.from(host.children);
-    const heights = _pdfFlowHeights(children, host);
+    if (!measured || measured.length !== children.length) measured = _pdfMeasure(host);
 
     // Units to pack: atomic blocks, or splittable tables (rows measured individually).
     const units = children.map((el, i) => {
-      if (!_pdfIsSplittableTable(el)) return { kind: "block", els: [el], h: heights[i] };
-      const rows = Array.from(el.tBodies[0].rows);
-      const rowRects = rows.map(r => r.getBoundingClientRect());
-      const bodyBottom = el.tBodies[0].getBoundingClientRect().bottom;
-      const rowH = rows.map((r, j) => (j + 1 < rows.length ? rowRects[j + 1].top : bodyBottom) - rowRects[j].top);
-      const headH = rowRects[0].top - el.getBoundingClientRect().top;
-      const extra = Math.max(0, heights[i] - headH - rowH.reduce((a, b) => a + b, 0)); // margins / borders
-      const headCells = Array.from(el.tHead.rows[0].cells);
-      const colW = headCells.map(c => c.getBoundingClientRect().width);
-      return { kind: "table", el, rows, rowH, headH: headH + extra, colW };
+      const m = measured[i];
+      if (!m.table || !_pdfIsSplittableTable(el)) return { kind: "block", els: [el], h: m.h };
+      return { kind: "table", el, rows: Array.from(el.tBodies[0].rows), rowH: m.rowH, headH: m.headH, colW: m.colW };
     });
 
     // Keep "amount in words" / certification / notes lines glued to the totals above them.
@@ -206,19 +248,6 @@ async function buildPagedPdfBlob(html, opts) {
     void stage.offsetHeight;
 
     // ---------- 4. Render each page and assemble ----------
-    const pageMm = orientation === "portrait" ? { w: 210, h: 297 } : { w: 297, h: 210 };
-    const workerOpts = {
-      margin: 0,
-      image: { type: "jpeg", quality: 0.96 },
-      html2canvas: {
-        scale: 2, useCORS: true, allowTaint: false, backgroundColor: "#ffffff",
-        scrollX: 0, scrollY: 0,
-        width: geo.w, height: geo.h,
-        windowWidth: 1280, windowHeight: 1600   // render as a desktop browser, even on phones
-      },
-      jsPDF: { unit: "mm", format: "a4", orientation: orientation }
-    };
-
     let pdf = null;
     for (let i = 0; i < pageEls.length; i++) {
       if (i === 0) {
