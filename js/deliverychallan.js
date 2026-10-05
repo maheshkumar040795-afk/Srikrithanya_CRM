@@ -531,9 +531,8 @@ function renderChallanHTML(data) {
           <div class="small-muted">Goods dispatched as per the details above. Please verify quantity and condition on receipt.</div>
         </td>
         <td class="sig-cell">
-          <div class="sig-stamp-wrap">
-            <img src="assets/company-seal.png" class="sig-seal" alt="Company seal" />
-            <img src="assets/director-signature-block.png" class="sig-block" alt="Authorized signatory" />
+          <div class="sig-stamp-wrap seal-only">
+            <img src="assets/company-seal-only.png?v=1" class="sig-seal" alt="Company seal" />
           </div>
           <div class="small-muted">Authorized Signatory</div>
         </td>
