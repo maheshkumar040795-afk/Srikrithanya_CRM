@@ -824,10 +824,10 @@ select:focus-visible, textarea:focus-visible {
   opacity: 0.92;
 }
 .invoice-sheet .small-muted { color: #555; font-size: 10.5px; }
-/* Seal only (director signature removed from Invoice / Quotation / DC / Voucher) */
+/* Seal with signature only (separate "For SRIKRITHANYA / Director" block removed) */
 .invoice-sheet .bank-table .sig-cell .sig-stamp-wrap.seal-only { display: block; width: auto; height: auto; margin: 0 0 6px; }
 .invoice-sheet .bank-table .sig-cell .sig-stamp-wrap.seal-only .sig-seal {
-  position: static; display: block; width: 92px; margin: 0 auto; opacity: 0.95;
+  position: static; display: block; width: 118px; margin: 0 auto; opacity: 0.95;
 }
 
 /* ---------------- Alerts ---------------- */

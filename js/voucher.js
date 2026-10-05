@@ -278,7 +278,7 @@ function renderVoucherHTML(data) {
         </td>
         <td class="sig-cell">
           <div class="sig-stamp-wrap seal-only">
-            <img src="assets/company-seal-only.png?v=1" class="sig-seal" alt="Company seal" />
+            <img src="assets/company-seal.png" class="sig-seal" alt="Company seal with signature" />
           </div>
           <div class="small-muted">Manager / Accountant</div>
         </td>
