@@ -1,12 +1,31 @@
 // ============================================================
-// BOQ — Bill of Quantities / quotations. Items with Qty × Rate,
+// BOQ — Bill of Quantities / quotations. Items with Qty × Unit Rate
+// (Unit Rate = Material Rate + Labour Rate),
 // a user-entered GST % (split evenly into CGST + SGST), save to
 // Firestore, and export as a formatted PDF. Reuses SELLER, BANK,
 // PDF_OPTS and waitForImages from js/invoice.js.
 // ============================================================
 
 let currentBoqId = null;
-let boqItemRows = []; // [{ id, description, unit, qty, rate }]
+let boqItemRows = []; // [{ id, description, unit, qty, materialRate, labourRate, rate }]
+
+// Unit Rate = Material Rate + Labour Rate; Amount = Qty × Unit Rate.
+// `rate` is kept on every item (= unit rate) so older code / records keep working.
+function boqUnitRate(r) { return (Number(r.materialRate) || 0) + (Number(r.labourRate) || 0); }
+function boqAmount(r) { return (Number(r.qty) || 0) * boqUnitRate(r); }
+
+/** Older BOQs/Quotations only stored a single `rate` — treat it as the Material Rate. */
+function normalizeBoqItem(it) {
+  const out = Object.assign({}, it);
+  if (out.materialRate === undefined && out.labourRate === undefined) {
+    out.materialRate = Number(out.rate) || 0;
+    out.labourRate = 0;
+  }
+  out.materialRate = Number(out.materialRate) || 0;
+  out.labourRate = Number(out.labourRate) || 0;
+  out.rate = boqUnitRate(out);
+  return out;
+}
 let allBoqs = [];
 
 // ---------------- Items table ----------------
@@ -17,6 +36,8 @@ function addBoqItemRow(prefill) {
     description: "",
     unit: "",
     qty: 1,
+    materialRate: 0,
+    labourRate: 0,
     rate: 0
   }, prefill || {});
   boqItemRows.push(row);
@@ -29,7 +50,7 @@ function addBoqItemRow(prefill) {
 function insertBoqItemRowAbove(id) {
   const idx = boqItemRows.findIndex(r => r.id === id);
   if (idx < 0) return;
-  boqItemRows.splice(idx, 0, { id: uid("boqitem"), description: "", unit: "", qty: 1, rate: 0 });
+  boqItemRows.splice(idx, 0, { id: uid("boqitem"), description: "", unit: "", qty: 1, materialRate: 0, labourRate: 0, rate: 0 });
   renderBoqItemsTable();
   focusNewItemRow("boqItemsBody", idx);
 }
@@ -44,14 +65,16 @@ function renderBoqItemsTable() {
   const body = document.getElementById("boqItemsBody");
   body.innerHTML = "";
   boqItemRows.forEach((row, idx) => {
-    const amount = (Number(row.qty) || 0) * (Number(row.rate) || 0);
+    const amount = boqAmount(row);
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="col-sl">${idx + 1}</td>
       <td><input type="text" value="${escapeHtml(row.description)}" placeholder="e.g. Supply and installation of fire hydrant piping" data-field="description" data-id="${row.id}" /></td>
       <td class="col-unit"><input type="text" value="${escapeHtml(row.unit)}" placeholder="Rmt / No / LS" data-field="unit" data-id="${row.id}" /></td>
       <td class="col-qty"><input type="number" min="0" step="1" value="${row.qty}" data-field="qty" data-id="${row.id}" /></td>
-      <td class="col-rate"><input type="number" min="0" step="0.01" value="${row.rate}" data-field="rate" data-id="${row.id}" /></td>
+      <td class="col-rate"><input type="number" min="0" step="0.01" value="${row.materialRate}" data-field="materialRate" data-id="${row.id}" aria-label="Material rate" /></td>
+      <td class="col-rate"><input type="number" min="0" step="0.01" value="${row.labourRate}" data-field="labourRate" data-id="${row.id}" aria-label="Labour rate" /></td>
+      <td class="col-unitrate">${fmtMoney(boqUnitRate(row))}</td>
       <td class="col-amt">${fmtMoney(amount)}</td>
       <td class="col-row-actions">
         <div class="item-row-actions">
@@ -69,10 +92,12 @@ function renderBoqItemsTable() {
       const field = e.target.getAttribute("data-field");
       const row = boqItemRows.find(r => r.id === id);
       if (!row) return;
-      row[field] = (field === "qty" || field === "rate") ? Number(e.target.value) : e.target.value;
+      row[field] = (field === "qty" || field === "materialRate" || field === "labourRate") ? Number(e.target.value) : e.target.value;
+      row.rate = boqUnitRate(row);
       recalcBoqTotals();
-      const amountCell = e.target.closest("tr").querySelector(".col-amt");
-      amountCell.textContent = fmtMoney((Number(row.qty) || 0) * (Number(row.rate) || 0));
+      const tr = e.target.closest("tr");
+      tr.querySelector(".col-unitrate").textContent = fmtMoney(boqUnitRate(row));
+      tr.querySelector(".col-amt").textContent = fmtMoney(boqAmount(row));
     });
   });
   body.querySelectorAll("[data-remove]").forEach(btn => {
@@ -104,7 +129,7 @@ function wireBoqGstTypeControls() {
 }
 
 function recalcBoqTotals() {
-  const taxable = boqItemRows.reduce((sum, r) => sum + (Number(r.qty) || 0) * (Number(r.rate) || 0), 0);
+  const taxable = boqItemRows.reduce((sum, r) => sum + boqAmount(r), 0);
   const gstType = document.getElementById("b_gstType").value;
 
   let igstPercent = 0, cgstPercent = 0, sgstPercent = 0;
@@ -217,8 +242,11 @@ function collectBoqFormData() {
     clientContact: document.getElementById("b_clientContact").value,
     clientGstin: document.getElementById("b_clientGstin").value,
     items: boqItemRows.map(r => ({
-      description: r.description, unit: r.unit, qty: Number(r.qty) || 0, rate: Number(r.rate) || 0,
-      amount: (Number(r.qty) || 0) * (Number(r.rate) || 0)
+      description: r.description, unit: r.unit, qty: Number(r.qty) || 0,
+      materialRate: Number(r.materialRate) || 0,
+      labourRate: Number(r.labourRate) || 0,
+      rate: boqUnitRate(r),          // Unit Rate
+      amount: boqAmount(r)
     })),
     taxableValue: totals.taxable,
     gstType: totals.gstType,
@@ -260,7 +288,7 @@ function loadBoqIntoForm(data, docId) {
   updateBoqGstTypeUI();
   // BOQs/Quotations saved before T&C existed have no terms fields — treat as off.
   setTermsState("b", !!(data.termsEnabled && data.termsText), data.termsText || "");
-  boqItemRows = (data.items || []).map(it => Object.assign({ id: uid("boqitem") }, it));
+  boqItemRows = (data.items || []).map(it => Object.assign({ id: uid("boqitem") }, normalizeBoqItem(it)));
   if (boqItemRows.length === 0) addBoqItemRow();
   else renderBoqItemsTable();
 }
@@ -474,16 +502,43 @@ function renderBoqGstRowsHtml(data) {
 
 function renderBoqHTML(data) {
   const meta = getBoqDocMeta(data.docType);
-  const itemsHtml = (data.items || []).map((it, idx) => `
+  const money = v => Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // BOQs/Quotations saved before the Material / Labour split keep their original
+  // single "Rate" layout, so documents already sent to clients print unchanged.
+  const split = (data.items || []).some(it => it.materialRate !== undefined || it.labourRate !== undefined);
+  const itemsHtml = (data.items || []).map((it, idx) => {
+    const n = split ? normalizeBoqItem(it) : it;
+    return `
     <tr>
       <td class="center">${idx + 1}</td>
       <td>${escapeHtml(it.description)}</td>
       <td class="center">${escapeHtml(it.unit)}</td>
       <td class="center">${it.qty}</td>
-      <td class="num">${Number(it.rate).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-      <td class="num">${Number(it.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+      ${split ? `
+      <td class="num">${money(n.materialRate)}</td>
+      <td class="num">${money(n.labourRate)}</td>
+      <td class="num">${money(n.rate)}</td>
+      <td class="num">${money((Number(it.qty) || 0) * n.rate)}</td>` : `
+      <td class="num">${money(it.rate)}</td>
+      <td class="num">${money(it.amount)}</td>`}
     </tr>
-  `).join("");
+  `;
+  }).join("");
+  const headHtml = split ? `
+          <th style="width:28px;">Sl No</th>
+          <th>Description of Work / Item</th>
+          <th style="width:44px;">Unit</th>
+          <th style="width:40px;">Qty</th>
+          <th style="width:76px;">Material Rate</th>
+          <th style="width:72px;">Labour Rate</th>
+          <th style="width:78px;">Unit Rate</th>
+          <th style="width:88px;">Amount</th>` : `
+          <th style="width:28px;">Sl No</th>
+          <th>Description of Work / Item</th>
+          <th style="width:60px;">Unit</th>
+          <th style="width:50px;">Qty</th>
+          <th style="width:80px;">Rate</th>
+          <th style="width:90px;">Amount</th>`;
 
   return `
     <div class="inv-title">${meta.title}</div>
@@ -520,13 +575,7 @@ function renderBoqHTML(data) {
 
     <table class="items-print">
       <thead>
-        <tr>
-          <th style="width:28px;">Sl No</th>
-          <th>Description of Work / Item</th>
-          <th style="width:60px;">Unit</th>
-          <th style="width:50px;">Qty</th>
-          <th style="width:80px;">Rate</th>
-          <th style="width:90px;">Amount</th>
+        <tr>${headHtml}
         </tr>
       </thead>
       <tbody>${itemsHtml}</tbody>

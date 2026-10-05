@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#150d0e" />
-<link rel="stylesheet" href="css/style.css?v=5" />
+<link rel="stylesheet" href="css/style.css?v=6" />
 </head>
 <body>
 
@@ -633,7 +633,7 @@
           <div class="panel-head">
             <div>
               <h3>Items</h3>
-              <div class="desc">Amount = Qty × Rate. Set the GST % below — it's split evenly into CGST + SGST. Use + on any row to insert a new item above it.</div>
+              <div class="desc">Unit Rate = Material Rate + Labour Rate · Amount = Qty × Unit Rate. Set the GST % below — it's split evenly into CGST + SGST. Use + on any row to insert a new item above it.</div>
             </div>
           </div>
 
@@ -645,7 +645,9 @@
                   <th>Description of Work / Item</th>
                   <th class="col-unit">Unit</th>
                   <th class="col-qty">Qty</th>
-                  <th class="col-rate">Rate (₹)</th>
+                  <th class="col-rate">Material Rate (₹)</th>
+                  <th class="col-rate">Labour Rate (₹)</th>
+                  <th class="col-unitrate">Unit Rate (₹)</th>
                   <th class="col-amt">Amount (₹)</th>
                   <th class="col-row-actions"><span class="visually-hidden">Row actions</span></th>
                 </tr>
@@ -1970,7 +1972,7 @@
 <script src="js/clients.js"></script>
 <script src="js/client-documents.js"></script>
 <script src="js/invoice.js"></script>
-<script src="js/boq.js"></script>
+<script src="js/boq.js?v=6"></script>
 <script src="js/deliverychallan.js"></script>
 <script src="js/voucher.js"></script>
 <script src="js/idcards.js"></script>

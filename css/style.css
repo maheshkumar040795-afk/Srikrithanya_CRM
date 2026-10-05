@@ -531,6 +531,13 @@ select:focus-visible, textarea:focus-visible {
 .items-table .col-sl { width: 38px; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
 .items-table .col-qty, .items-table .col-rate, .items-table .col-mrp { width: 96px; }
 .items-table .col-hsn { width: 112px; }
+.items-table .col-unitrate { width: 110px; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); padding-right: 10px; white-space: nowrap; }
+#boqItemsTable th.col-rate, #boqItemsTable th.col-unitrate { white-space: normal; line-height: 1.25; }
+#boqItemsTable .col-unit { width: 72px; }
+#boqItemsTable .col-qty { width: 76px; }
+#boqItemsTable .col-rate { width: 92px; }
+#boqItemsTable .col-unitrate { width: 100px; }
+#boqItemsTable .col-amt { width: 112px; }
 .items-table .col-unit { width: 86px; }
 .items-table .col-amt { width: 120px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; padding-right: 12px; }
 .items-table .row-remove {
@@ -1133,3 +1140,6 @@ select:focus-visible, textarea:focus-visible {
   .modal-body.preview-stage:not(.flush) { padding: 8px; }
   .pdf-preview { gap: 10px; }
 }
+
+/* BOQ / Quotation form has 2 extra rate columns — let it scroll sideways on phones */
+@media (max-width: 860px) { #boqItemsTable { min-width: 900px; } }
