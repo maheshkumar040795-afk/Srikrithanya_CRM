@@ -218,6 +218,28 @@ async function fetchLastTermsFrom(collectionName, matchFn) {
   return "";
 }
 
+// ---------------- Discount (shared by Invoice and BOQ/Quotation) ----------------
+/** Sub Total → less Discount % → Taxable Value. Percent is clamped to 0–100. */
+function computeDiscount(subTotal, percentRaw) {
+  let pct = Number(percentRaw) || 0;
+  if (pct < 0) pct = 0;
+  if (pct > 100) pct = 100;
+  const discount = Math.round(subTotal * pct) / 100;   // rounded to paise
+  return { subTotal, discountPercent: pct, discount, taxable: subTotal - discount };
+}
+
+/** Printed rows above "Taxable Value" — only when a discount was applied, so
+ *  older invoices / quotations (no discount fields) print exactly as before. */
+function renderDiscountPrintRowsHtml(data) {
+  const amt = Number(data && data.discountAmount) || 0;
+  if (amt <= 0) return "";
+  const money = v => Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const sub = data.subTotal != null ? data.subTotal : (Number(data.taxableValue) || 0) + amt;
+  return `
+      <tr><td class="lbl-cell">Sub Total</td><td class="val-cell">₹${money(sub)}</td></tr>
+      <tr><td class="lbl-cell">Less: Discount @ ${Number(data.discountPercent) || 0}%</td><td class="val-cell">− ₹${money(amt)}</td></tr>`;
+}
+
 function renderTermsPrintHtml(data) {
   if (!data || !data.termsEnabled || !data.termsText || !String(data.termsText).trim()) return "";
   const lines = String(data.termsText).split(/\r?\n/).map(l => l.trim()).filter(Boolean);

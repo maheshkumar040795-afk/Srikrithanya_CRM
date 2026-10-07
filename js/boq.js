@@ -125,11 +125,15 @@ function wireBoqGstTypeControls() {
   document.getElementById("b_cgstPercent").addEventListener("input", recalcBoqTotals);
   document.getElementById("b_sgstPercent").addEventListener("input", recalcBoqTotals);
   document.getElementById("b_igstPercent").addEventListener("input", recalcBoqTotals);
+  document.getElementById("b_discountPercent").addEventListener("input", recalcBoqTotals);
   updateBoqGstTypeUI();
 }
 
 function recalcBoqTotals() {
-  const taxable = boqItemRows.reduce((sum, r) => sum + boqAmount(r), 0);
+  const subTotal = boqItemRows.reduce((sum, r) => sum + boqAmount(r), 0);
+  // Discount % is taken off the Sub Total; GST is charged on what's left (Taxable Value).
+  const disc = computeDiscount(subTotal, document.getElementById("b_discountPercent").value);
+  const taxable = disc.taxable;
   const gstType = document.getElementById("b_gstType").value;
 
   let igstPercent = 0, cgstPercent = 0, sgstPercent = 0;
@@ -148,6 +152,12 @@ function recalcBoqTotals() {
 
   const total = taxable + igst + cgst + sgst;
 
+  const showDisc = disc.discount > 0;
+  document.getElementById("b_subRow").style.display = showDisc ? "" : "none";
+  document.getElementById("b_discRow").style.display = showDisc ? "" : "none";
+  document.getElementById("b_subTotal").textContent = fmtMoney(subTotal);
+  document.getElementById("b_discLabel").textContent = `Less: Discount @ ${disc.discountPercent}%`;
+  document.getElementById("b_discount").textContent = "− " + fmtMoney(disc.discount);
   document.getElementById("b_taxable").textContent = fmtMoney(taxable);
   document.getElementById("b_igstLabel").textContent = `IGST @ ${igstPercent}%`;
   document.getElementById("b_igst").textContent = fmtMoney(igst);
@@ -158,7 +168,7 @@ function recalcBoqTotals() {
   document.getElementById("b_total").textContent = fmtMoney(total);
   document.getElementById("b_words").textContent = "Amount in words: " + numberToWordsIndian(total);
 
-  return { taxable, gstType, igstPercent, igst, cgstPercent, cgst, sgstPercent, sgst, total };
+  return { subTotal, discountPercent: disc.discountPercent, discount: disc.discount, taxable, gstType, igstPercent, igst, cgstPercent, cgst, sgstPercent, sgst, total };
 }
 
 // ---------------- Document type (BOQ / Quotation) ----------------
@@ -219,6 +229,7 @@ function resetBoqForm(newNumber) {
   document.getElementById("b_cgstPercent").value = 9;
   document.getElementById("b_sgstPercent").value = 9;
   document.getElementById("b_igstPercent").value = 18;
+  document.getElementById("b_discountPercent").value = 0;
   updateBoqGstTypeUI();
   setTermsState("b", false, "");
   addBoqItemRow();
@@ -248,6 +259,9 @@ function collectBoqFormData() {
       rate: boqUnitRate(r),          // Unit Rate
       amount: boqAmount(r)
     })),
+    subTotal: totals.subTotal,
+    discountPercent: totals.discountPercent,
+    discountAmount: totals.discount,
     taxableValue: totals.taxable,
     gstType: totals.gstType,
     igstPercent: totals.igstPercent,
@@ -285,6 +299,8 @@ function loadBoqIntoForm(data, docId) {
     document.getElementById("b_sgstPercent").value = data.sgstPercent != null ? data.sgstPercent : 9;
   }
   document.getElementById("b_igstPercent").value = data.igstPercent != null ? data.igstPercent : 18;
+  // Records saved before the discount option have no discountPercent — treat as 0.
+  document.getElementById("b_discountPercent").value = Number(data.discountPercent) || 0;
   updateBoqGstTypeUI();
   // BOQs/Quotations saved before T&C existed have no terms fields — treat as off.
   setTermsState("b", !!(data.termsEnabled && data.termsText), data.termsText || "");
@@ -582,6 +598,7 @@ function renderBoqHTML(data) {
     </table>
 
     <table class="totals-print">
+      ${renderDiscountPrintRowsHtml(data)}
       <tr><td class="lbl-cell">Taxable Value</td><td class="val-cell">₹${Number(data.taxableValue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
       ${renderBoqGstRowsHtml(data)}
       <tr><td class="lbl-cell" style="font-size:12.5px;">Total (Net Amount)</td><td class="val-cell" style="font-size:12.5px;">₹${Number(data.netTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>

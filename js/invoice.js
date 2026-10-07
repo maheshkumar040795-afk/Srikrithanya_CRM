@@ -118,11 +118,15 @@ function wireInvoiceGstTypeControls() {
   document.getElementById("f_cgstPercent").addEventListener("input", recalcTotals);
   document.getElementById("f_sgstPercent").addEventListener("input", recalcTotals);
   document.getElementById("f_igstPercent").addEventListener("input", recalcTotals);
+  document.getElementById("f_discountPercent").addEventListener("input", recalcTotals);
   updateInvoiceGstTypeUI();
 }
 
 function recalcTotals() {
-  const taxable = itemRows.reduce((sum, r) => sum + (Number(r.qty) || 0) * (Number(r.rate) || 0), 0);
+  const subTotal = itemRows.reduce((sum, r) => sum + (Number(r.qty) || 0) * (Number(r.rate) || 0), 0);
+  // Discount % is taken off the Sub Total; GST is charged on what's left (Taxable Value).
+  const disc = computeDiscount(subTotal, document.getElementById("f_discountPercent").value);
+  const taxable = disc.taxable;
   const gstType = document.getElementById("f_gstType").value;
 
   let igstPercent = 0, cgstPercent = 0, sgstPercent = 0;
@@ -141,6 +145,12 @@ function recalcTotals() {
 
   const total = taxable + igst + cgst + sgst;
 
+  const showDisc = disc.discount > 0;
+  document.getElementById("t_subRow").style.display = showDisc ? "" : "none";
+  document.getElementById("t_discRow").style.display = showDisc ? "" : "none";
+  document.getElementById("t_subTotal").textContent = fmtMoney(subTotal);
+  document.getElementById("t_discLabel").textContent = `Less: Discount @ ${disc.discountPercent}%`;
+  document.getElementById("t_discount").textContent = "− " + fmtMoney(disc.discount);
   document.getElementById("t_taxable").textContent = fmtMoney(taxable);
   document.getElementById("t_igstLabel").textContent = `IGST @ ${igstPercent}%`;
   document.getElementById("t_igst").textContent = fmtMoney(igst);
@@ -151,7 +161,7 @@ function recalcTotals() {
   document.getElementById("t_total").textContent = fmtMoney(total);
   document.getElementById("t_words").textContent = "Amount in words: " + numberToWordsIndian(total);
 
-  return { taxable, gstType, igstPercent, igst, cgstPercent, cgst, sgstPercent, sgst, total };
+  return { subTotal, discountPercent: disc.discountPercent, discount: disc.discount, taxable, gstType, igstPercent, igst, cgstPercent, cgst, sgstPercent, sgst, total };
 }
 
 // ---------------- Invoice numbering ----------------
@@ -191,6 +201,7 @@ function resetInvoiceForm(newNumber) {
   document.getElementById("f_cgstPercent").value = 9;
   document.getElementById("f_sgstPercent").value = 9;
   document.getElementById("f_igstPercent").value = 18;
+  document.getElementById("f_discountPercent").value = 0;
   updateInvoiceGstTypeUI();
   setTermsState("f", false, "");
   addItemRow();
@@ -226,6 +237,9 @@ function collectFormData() {
       description: r.description, hsn: r.hsn, qty: Number(r.qty) || 0, rate: Number(r.rate) || 0,
       amount: (Number(r.qty) || 0) * (Number(r.rate) || 0)
     })),
+    subTotal: totals.subTotal,
+    discountPercent: totals.discountPercent,
+    discountAmount: totals.discount,
     taxableValue: totals.taxable,
     gstType: totals.gstType,
     igstPercent: totals.igstPercent,
@@ -265,6 +279,8 @@ function loadInvoiceIntoForm(data, docId) {
   document.getElementById("f_cgstPercent").value = data.cgstPercent != null ? data.cgstPercent : 9;
   document.getElementById("f_sgstPercent").value = data.sgstPercent != null ? data.sgstPercent : 9;
   document.getElementById("f_igstPercent").value = data.igstPercent != null ? data.igstPercent : 18;
+  // Records saved before the discount option have no discountPercent — treat as 0.
+  document.getElementById("f_discountPercent").value = Number(data.discountPercent) || 0;
   updateInvoiceGstTypeUI();
   // Invoices saved before T&C existed have no terms fields — treat as off.
   setTermsState("f", !!(data.termsEnabled && data.termsText), data.termsText || "");
@@ -416,6 +432,7 @@ function renderInvoiceHTML(data) {
     </table>
 
     <table class="totals-print">
+      ${renderDiscountPrintRowsHtml(data)}
       <tr><td class="lbl-cell">Taxable Value</td><td class="val-cell">₹${Number(data.taxableValue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
       ${renderInvoiceGstRowsHtml(data)}
       <tr><td class="lbl-cell" style="font-size:12.5px;">Total (Net Amount)</td><td class="val-cell" style="font-size:12.5px;">₹${Number(data.netTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td></tr>
