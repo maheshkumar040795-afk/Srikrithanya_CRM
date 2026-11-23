@@ -80,6 +80,33 @@ function _pdfReconcile(live, clone) {
   });
 }
 
+/** Scales every height in a measurement list (column widths stay as laid out). */
+function _pdfScaleMeasure(list, f) {
+  return list.map(m => m.table
+    ? Object.assign({}, m, { h: m.h * f, headH: m.headH * f, rowH: m.rowH.map(h => h * f) })
+    : Object.assign({}, m, { h: m.h * f }));
+}
+
+/** Height (canvas px) down to the last non-white pixel row of a drawn canvas. */
+function _pdfDrawnHeight(canvas) {
+  try {
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const CH = 64;
+    for (let y0 = canvas.height; y0 > 0; y0 -= CH) {
+      const top = Math.max(0, y0 - CH);
+      const d = ctx.getImageData(0, top, w, y0 - top).data;
+      for (let y = y0 - top - 1; y >= 0; y--) {
+        const row = y * w * 4;
+        for (let x = 0; x < w * 4; x += 4) {
+          if (d[row + x] < 235 || d[row + x + 1] < 235 || d[row + x + 2] < 235) return top + y + 1;
+        }
+      }
+    }
+  } catch (e) { console.warn("PDF calibration scan failed", e); }
+  return 0;
+}
+
 function _pdfIsSplittableTable(el) {
   return el.tagName === "TABLE" && el.tHead && el.tBodies.length === 1 && el.tBodies[0].rows.length > 1;
 }
@@ -147,20 +174,49 @@ async function _pdfLayoutPages(html, opts) {
     // page could disagree (font not yet loaded, browser zoom), which pushed the last
     // rows of a page under the footer on laptops. Falls back to the live page.
     let measured = null;
-    try {
-      await html2pdf().set(Object.assign({}, workerOpts, {
-        html2canvas: Object.assign({}, workerOpts.html2canvas, {
-          scale: 1, width: contentW, height: 4,
-          onclone: (doc) => {
-            const cloneHost = doc.querySelector(".html2pdf__container .pdf-measure") || doc.querySelector(".pdf-measure");
-            if (cloneHost) measured = _pdfMeasure(cloneHost);
-          }
-        })
-      })).from(host).toCanvas();
-    } catch (e) { console.warn("PDF clone measure failed, using live layout", e); }
+    let cloneW = 0;
+    let drawnCanvas = null;
     const children = Array.from(host.children);
     const live = _pdfMeasure(host);
+    const liveTotal = live.reduce((a, m) => a + m.h, 0);
+    // Draw the whole document once (small scale) so the measurements can be
+    // checked against what html2canvas really paints — see calibration below.
+    const drawH = Math.ceil(liveTotal * 2.2) + 60;
+    const drawScale = Math.min(0.5, 6000 / Math.max(1, drawH));
+    try {
+      drawnCanvas = await html2pdf().set(Object.assign({}, workerOpts, {
+        html2canvas: Object.assign({}, workerOpts.html2canvas, {
+          scale: drawScale, width: contentW, height: drawH,
+          onclone: (doc) => {
+            const cloneHost = doc.querySelector(".html2pdf__container .pdf-measure") || doc.querySelector(".pdf-measure");
+            if (cloneHost) {
+              measured = _pdfMeasure(cloneHost);
+              cloneW = cloneHost.getBoundingClientRect().width;
+            }
+          }
+        })
+      })).from(host).toCanvas().get("canvas");
+    } catch (e) { console.warn("PDF clone measure failed, using live layout", e); }
+    // Some phone browsers (iPhone Safari especially) report the clone's sizes
+    // uniformly scaled. The host is a fixed contentW wide, so its measured width
+    // tells us that scale — undo it before using the numbers.
+    if (measured && cloneW > 0 && Math.abs(cloneW / contentW - 1) > 0.02) {
+      measured = _pdfScaleMeasure(measured, contentW / cloneW);
+    }
     measured = _pdfReconcile(live, measured);
+
+    // Calibration: compare the measured total height with the height actually
+    // painted. If they disagree (e.g. measurements inflated on a phone, which
+    // pushed the Bank Details / signature block onto an almost empty page 2),
+    // rescale every block/row height to match the real drawing.
+    const drawnH = drawnCanvas ? _pdfDrawnHeight(drawnCanvas) / drawScale : 0;
+    const measuredTotal = measured.reduce((a, m) => a + m.h, 0);
+    if (drawnH > 40 && measuredTotal > 0) {
+      const factor = drawnH / measuredTotal;
+      if (factor > 0.4 && factor < 1.6 && Math.abs(factor - 1) > 0.05) {
+        measured = _pdfScaleMeasure(measured, Math.min(1.6, factor * 1.02));
+      }
+    }
 
     // Units to pack: atomic blocks, or splittable tables (rows measured individually).
     const units = children.map((el, i) => {
