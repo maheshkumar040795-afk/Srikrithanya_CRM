@@ -130,11 +130,12 @@ function handleSupplierList() {
 }
 
 /** Upserts a price row. If body.id is given, that exact row is updated.
- *  Otherwise, Category+Item+Company is matched (case-insensitive) — this is
+ *  Otherwise, Category+Item+Company+Make is matched (case-insensitive) — this is
  *  what makes "an existing company revises their price for an existing item"
  *  just work from the CRM's Add/Update form without the user needing to find
  *  and open that exact row first. No match on either → a brand-new row is
- *  appended (covers a new item, or a new company quoting an existing item). */
+ *  appended (covers a new item, a new company quoting an existing item, or
+ *  the same company quoting a different Make/brand for the same item). */
 function handleSupplierSave(body) {
   var sheet = getSupplierSheet();
   var data = sheet.getDataRange().getValues();
@@ -159,7 +160,8 @@ function handleSupplierSave(body) {
     for (var j = 1; j < data.length; j++) {
       if (String(data[j][catIdx]).trim().toLowerCase() === String(body.category || "").trim().toLowerCase() &&
           String(data[j][itemIdx]).trim().toLowerCase() === String(body.item || "").trim().toLowerCase() &&
-          String(data[j][companyIdx]).trim().toLowerCase() === String(body.company || "").trim().toLowerCase()) {
+          String(data[j][companyIdx]).trim().toLowerCase() === String(body.company || "").trim().toLowerCase() &&
+          String(data[j][makeIdx]).trim().toLowerCase() === String(body.make || "").trim().toLowerCase()) {
         targetRow = j + 1;
         break;
       }

@@ -11,6 +11,7 @@
 
 let supplierPricesCache = [];
 let editingSupplierId = null;
+let editingSupplierOriginal = null; // row being edited, to detect a Make change
 
 function isSupplierBackendConfigured() {
   return typeof APPSCRIPT_WEB_APP_URL !== "undefined" && APPSCRIPT_WEB_APP_URL && APPSCRIPT_WEB_APP_URL !== "REPLACE_ME" &&
@@ -214,6 +215,7 @@ function handleSupplierPriceAction(action, row) {
 
 function resetSupplierPriceForm() {
   editingSupplierId = null;
+  editingSupplierOriginal = null;
   ["sp_category", "sp_item", "sp_company", "sp_make", "sp_unit", "sp_rate"].forEach(id => {
     document.getElementById(id).value = "";
   });
@@ -225,6 +227,7 @@ function resetSupplierPriceForm() {
 
 function loadSupplierPriceIntoForm(row) {
   editingSupplierId = row.ID;
+  editingSupplierOriginal = row;
   document.getElementById("sp_category").value = row.Category || "";
   document.getElementById("sp_item").value = row.Item || "";
   document.getElementById("sp_company").value = row.Company || "";
@@ -262,11 +265,26 @@ async function saveSupplierPrice() {
   btn.innerHTML = '<span class="spinner"></span>';
   hint.style.display = "none";
 
+  // Editing a row but Make changed → ask whether to keep the old brand's
+  // price as its own row (save as new) or overwrite this row.
+  let saveId = editingSupplierId || undefined;
+  if (editingSupplierId && editingSupplierOriginal) {
+    const oldMake = String(editingSupplierOriginal.Make || "").trim().toLowerCase();
+    if (oldMake !== make.toLowerCase()) {
+      const keepOld = confirm(
+        `Make changed from "${editingSupplierOriginal.Make || "—"}" to "${make || "—"}".\n\n` +
+        `OK = Save as a NEW row (keep the old "${editingSupplierOriginal.Make || "—"}" price)\n` +
+        `Cancel = Replace the old row`
+      );
+      if (keepOld) saveId = undefined;
+    }
+  }
+
   try {
     const user = auth.currentUser;
     const result = await callAppsScript({
       action: "supplierSave",
-      id: editingSupplierId || undefined,
+      id: saveId,
       category, item, company, make, unit, rate,
       updatedBy: user ? user.email : null
     });

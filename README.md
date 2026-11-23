@@ -351,9 +351,10 @@ just reads/writes the same rows.
   (via `SheetJS`, bundled in `js/vendor/xlsx.full.min.js`, also no external CDN).
 - **Suppliers tab** — a shared, searchable supplier price-comparison list (Category,
   Item, Company, Make, Unit, Rate), backed by a Google Sheet rather than Firestore — see
-  section 7 above for setup. Adding a price for a Category+Item+Company that already
-  exists revises it in place instead of duplicating a row, so the same form on the CRM
-  side covers new items, new companies quoting an existing item, and price revisions.
+  section 7 above for setup. Adding a price for a Category+Item+Company+Make that already
+  exists revises it in place instead of duplicating a row; a different Make is saved as
+  its own row, so the same form covers new items, new companies or brands quoting an
+  existing item, and price revisions.
 
 ## Editing the seller's fixed details
 
