@@ -786,6 +786,10 @@ select:focus-visible, textarea:focus-visible {
 .invoice-sheet .terms-cell .term-no { flex: 0 0 18px; text-align: right; }
 .invoice-sheet .terms-cell .term-text { flex: 1 1 auto; min-width: 0; }
 /* PDF pages: fixed text size so phones (iOS text autosizing) render exactly like laptops */
+/* First block on a PDF page: restore the top border it normally shares with the box above. */
+.invoice-sheet .pdf-first { margin-top: 0 !important; }
+.invoice-sheet .words-cell.pdf-first, .invoice-sheet .terms-cell.pdf-first, .invoice-sheet .cert-cell.pdf-first,
+.invoice-sheet .bank-table.pdf-first td, .invoice-sheet .totals-print.pdf-first tr:first-child td { border-top: 1px solid #999; }
 .pdf-stage, .pdf-stage * { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* Preview = downloaded PDF: real A4 pages, scaled to fit the screen on phones */

@@ -214,7 +214,7 @@ async function _pdfLayoutPages(html, opts) {
     if (drawnH > 40 && measuredTotal > 0) {
       const factor = drawnH / measuredTotal;
       if (factor > 0.4 && factor < 1.6 && Math.abs(factor - 1) > 0.05) {
-        measured = _pdfScaleMeasure(measured, Math.min(1.6, factor * 1.02));
+        measured = _pdfScaleMeasure(measured, Math.min(1.6, factor * 1.005));
       }
     }
 
@@ -297,8 +297,20 @@ async function _pdfLayoutPages(html, opts) {
         page.appendChild(c);
       }
 
+      let first = true;
       items.forEach(it => {
-        if (it.kind === "block") { it.unit.els.forEach(el => page.appendChild(el.cloneNode(true))); return; }
+        if (it.kind === "block") {
+          it.unit.els.forEach(el => {
+            const c = el.cloneNode(true);
+            // A block that opens a page (e.g. Bank Details / signature, Terms) is
+            // styled to join the box above it (no top border) — give it one back.
+            if (first && c.classList) c.classList.add("pdf-first");
+            first = false;
+            page.appendChild(c);
+          });
+          return;
+        }
+        first = false;
         const u = it.unit;
         const t = u.el.cloneNode(false);
         t.style.tableLayout = "fixed";
